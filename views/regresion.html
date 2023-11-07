@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block content %}
+    <div class="container mt-4">
+        <h2>Resultado de la Regresión Lineal</h2>
+        <p>Gráfico de la regresión lineal:</p>
+        <img src="{{ url_for('static', filename='regresion_plot.png') }}" alt="Gráfico de Regresión">
+    </div>
+{% endblock %}

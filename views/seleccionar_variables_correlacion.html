@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+    <div class="container mt-4">
+        <h2>Selecciona las variables para el análisis de correlación de la tabla: {{ table_name }}</h2>
+        <form method="POST" action="{{ url_for('mostrar_mapa_de_calor', table_name=table_name) }}">
+            {% for column in columns %}
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="selected_columns" value="{{ column }}" id="{{ column }}">
+                    <label class="form-check-label" for="{{ column }}">
+                        {{ column }}
+                    </label>
+                </div>
+            {% endfor %}
+            <button type="submit" class="btn btn-success">Correlación</button>
+        </form>
+    </div>
+
+{% endblock %}

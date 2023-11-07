@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+    <div class="container mt-4">
+        <h2>Selecciona las variables para el análisis de regresión lineal</h2>
+        <form method="POST" action="{{ url_for('realizar_regresion_lineal_route') }}">
+            <input type="hidden" name="table" value="{{ table_name }}">
+            <div class="mb-3">
+                <label for="x_variable" class="form-label">Variable para X:</label>
+                <select name="x_variable" id="x_variable" class="form-select">
+                    {% for column in columns %}
+                        <option value="{{ column }}">{{ column }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="y_variable" class="form-label">Variable para Y:</label>
+                <select name="y_variable" id="y_variable" class="form-select">
+                    {% for column in columns %}
+                        <option value="{{ column }}">{{ column }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-success">Realizar Regresión Lineal</button>
+        </form>
+        {% if success_message %}
+            <div class="alert alert-success mt-3">
+                {{ success_message }}
+            </div>
+        {% endif %}
+        {% if error_message %}
+            <div class="alert alert-danger mt-3">
+                {{ error_message }}
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}

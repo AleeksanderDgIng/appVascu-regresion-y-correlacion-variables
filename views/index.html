@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block content %}
+    
+    <div class="container mt-4"> <!-- Contenedor principal con margen superior de 4 unidades -->
+        
+        <h2>Gestión de Datos</h2> <!-- Encabezado de nivel 2 con estilo de Bootstrap -->
+
+
+        <!-- Formulario para seleccionar una tabla -->
+        <form method="POST" class="form mt-4"> <!-- Formulario con margen superior de 4 unidades -->
+            <div class="mb-3">
+                <label for="table" class="form-label">Selecciona una tabla:</label> <!-- Etiqueta de formulario con estilo de Bootstrap -->
+                <select name="table" id="table" class="form-select">
+                    <!-- Dropdown para seleccionar una tabla -->
+                    {% for table in tables %}
+                        <option value="{{ table }}" {% if table == selected_table %}selected{% endif %}>{{ table }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary mb-5">Ver Tabla</button> <!-- Botón de envío con estilo de Bootstrap -->
+        </form>
+
+        <!-- Enlace para seleccionar correlación -->
+        <a href="{{ url_for('seleccionar_variables', table_name=selected_table) }}" class="btn btn-success">Seleccionar Variables para Análisis de Correlación</a>
+
+        <!-- Agrega el enlace para seleccionar variables para regresión lineal -->
+  <a href="{{ url_for('seleccionar_variables_regresion', table_name=table_name) }}" class="btn btn-primary">Seleccionar Variables para Regresión</a>
+
+
+
+        
+        <!-- Mostrar registros de la tabla seleccionada -->
+        {% if selected_table %}
+            <h2 class="mt-5">Registros de {{ selected_table }}</h2> <!-- Encabezado de nivel 2 con margen superior de 5 unidades -->
+
+            <a href="{{ url_for('crear_registro', table_name=selected_table) }}" class="btn btn-success">Crear Registros</a> <!-- Enlace con estilo de Bootstrap -->
+            <table class="table table-striped table-bordered mt-4"> <!-- Tabla con estilos de Bootstrap y margen superior de 4 unidades -->
+                <thead class="table-dark"> <!-- Encabezado de tabla con fondo oscuro -->
+                    <tr>
+                        {% for col in columns %}
+                            <th>{{ col }}</th> <!-- Encabezados de columna -->
+                        {% endfor %}
+                        <th>Acciones</th> <!-- Encabezado de columna para acciones -->
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in records %}
+                        <tr>
+                            <td>{{ record[0] }}</td> <!-- Celda de datos -->
+                            {% for value in record[1:] %}
+                                <td>{{ value }}</td> <!-- Celdas de datos -->
+                            {% endfor %}
+                            <td>
+                                <a href="/editar/{{ selected_table }}/{{ record[0] }}" class="btn btn-primary">Editar</a> <!-- Enlace de edición con estilo de Bootstrap -->
+                                <a href="/eliminar/{{ selected_table }}/{{ record[0] }}" class="btn btn-danger">Eliminar</a> <!-- Enlace de eliminación con estilo de Bootstrap -->
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+    </div>
+
+{% endblock %}
