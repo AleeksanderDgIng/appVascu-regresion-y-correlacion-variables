@@ -8,6 +8,7 @@ from models.db_connection import get_db_connection  # Importa la función de con
 
 from controllers.analizar_correlacion import analizar_correlacion
 from controllers.regresion_lineal import realizar_regresion_lineal
+from controllers.regresion_lineal import model, scaler
 
 # Crear instancia de la aplicación Flask
 app = Flask(__name__, template_folder='views')
@@ -336,29 +337,57 @@ def realizar_regresion_lineal_route():
 
 
 # Ruta para la página de regresión lineal
-@app.route('/regresion-lineal', methods=['GET'])
+@app.route('/regresion-lineal', methods=['GET', 'POST'])
 def regresion_lineal():
     selected_table = request.args.get('table')
     x_variable = request.args.get('x_variable')
     y_variable = request.args.get('y_variable')
     success_message = None
     error_message = None
+    prediction = None  # Agregar una variable para almacenar la predicción
 
-    if selected_table:
+    if request.method == 'POST':
         try:
-            success_message, error_message = realizar_regresion_lineal(selected_table, x_variable, y_variable)
-        except Exception as e:
-            error_message = f"Error en la regresión lineal: {str(e)}"
-    else:
-        error_message = "Falta información necesaria para realizar la regresión lineal."
+            # Obtener el valor de entrada de X desde el formulario
+            input_x = float(request.form['x_variable'])
 
-    return render_template('regresion.html', success_message=success_message, error_message=error_message)
+            # Llamar a la función de regresión lineal con el valor de entrada
+            success_message, error_message, prediction = realizar_regresion_lineal(selected_table, x_variable, y_variable, input_x)
+        except ValueError:
+            error_message = "Ingresa un valor válido para X."
+
+    return render_template('regresion.html', success_message=success_message, error_message=error_message, prediction=prediction)
 
 
 # Ruta para la página de regresión lineal
 @app.route('/resultado-regresion', methods=['GET'])
 def resultado_regresion():
     return render_template('regresion.html', success_message=success_message, error_message=None)
+
+
+# Ruta principal
+@app.route('/')
+def regresion():
+    return render_template('regresion.html', prediction=None)
+
+# Ruta para ingresar nuevos datos y realizar predicciones
+@app.route('/realizar-prediccion', methods=['POST'])
+def realizar_prediccion():
+    prediction = None  # Inicializa la variable de predicción
+
+    if request.method == 'POST':
+        x_variable = float(request.form.get('x_variable'))  # Obtiene el valor de X del formulario
+        if scaler is not None:  # Verifica si el scaler está inicializado
+            x_variable_std = scaler.transform([[x_variable]])  # Estandariza el valor de X
+
+            # Realiza la predicción con el modelo
+            y_pred = model.predict(x_variable_std)
+            y_pred = scaler.inverse_transform(y_pred)  # Desescala la predicción
+
+            # Asigna la predicción a la variable de resultado
+            prediction = f"Predicción para X={x_variable}: Y={y_pred[0, 0]:.2f}"
+
+    return render_template('regresion.html', prediction=prediction)
 
 
 # Iniciar la aplicación si este archivo se ejecuta directamente
