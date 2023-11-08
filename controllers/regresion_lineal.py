@@ -24,6 +24,8 @@ def realizar_regresion_lineal(selected_table, x_variable, y_variable):
     values_calculated = False
 
     try:
+        plt.figure()  # Crea una nueva figura
+         
         # Configura el modelo
         model = LinearRegression()
 
@@ -65,6 +67,7 @@ def realizar_regresion_lineal(selected_table, x_variable, y_variable):
                 plt.ylabel(y_variable)
                 plt.legend()
                 plt.savefig('static/image_regresion/regresion_plot.png')
+                plt.clf()  # Limpia la figura actual
                 print("Gráfico de regresión guardado correctamente en 'static/image_regresion/regresion_plot.png'")
                 success_message = "Regresión lineal completada."
                 beta_0 = model.intercept_[0]
