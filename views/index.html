@@ -3,29 +3,8 @@
     
     <div class="container mt-4"> <!-- Contenedor principal con margen superior de 4 unidades -->
         
-        <h2>Gestión de Datos</h2> <!-- Encabezado de nivel 2 con estilo de Bootstrap -->
 
-
-        <!-- Formulario para seleccionar una tabla -->
-        <form method="POST" class="form mt-4"> <!-- Formulario con margen superior de 4 unidades -->
-            <div class="mb-3">
-                <label for="table" class="form-label">Selecciona una tabla:</label> <!-- Etiqueta de formulario con estilo de Bootstrap -->
-                <select name="table" id="table" class="form-select">
-                    <!-- Dropdown para seleccionar una tabla -->
-                    {% for table in tables %}
-                        <option value="{{ table }}" {% if table == selected_table %}selected{% endif %}>{{ table }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <button type="submit" class="btn btn-primary mb-5">Ver Tabla</button> <!-- Botón de envío con estilo de Bootstrap -->
-        </form>
-
-        <!-- Enlace para seleccionar correlación -->
-        <a href="{{ url_for('seleccionar_variables', table_name=selected_table) }}" class="btn btn-success">Seleccionar Variables para Análisis de Correlación</a>
-
-        <!-- Agrega el enlace para seleccionar variables para regresión lineal -->
-  <a href="{{ url_for('seleccionar_variables_regresion', table_name=table_name) }}" class="btn btn-primary">Seleccionar Variables para Regresión</a>
-
+        
 
 
         

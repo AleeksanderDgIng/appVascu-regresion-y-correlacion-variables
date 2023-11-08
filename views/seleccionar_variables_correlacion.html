@@ -1,7 +1,9 @@
 {% extends "base.html" %}
 {% block content %}
     <div class="container mt-4">
-        <h2>Selecciona las variables para el análisis de correlación de la tabla: {{ table_name }}</h2>
+    <h2>Seleccionar variables para Correlación en la tabla {{ table_name }}</h2>
+
+ 
         <form method="POST" action="{{ url_for('mostrar_mapa_de_calor', table_name=table_name) }}">
             {% for column in columns %}
                 <div class="form-check">
@@ -13,6 +15,36 @@
             {% endfor %}
             <button type="submit" class="btn btn-success">Correlación</button>
         </form>
+
+
+        <h3>Registros de la tabla {{ table_name }}:</h3>
+
+    <a href="{{ url_for('crear_registro', table_name=selected_table) }}" class="btn btn-success">Crear Registros</a> <!-- Enlace con estilo de Bootstrap -->
+    <table class="table table-striped table-bordered mt-4">
+        <thead class="table-dark">
+            <tr>
+                {% for column in columns %}
+                    <th>{{ column }}</th>
+                {% endfor %}
+                <th>Acciones</th> <!-- Encabezado de columna para acciones -->
+            </tr>
+        </thead>
+        <tbody>
+            {% for record in records %}
+                <tr>
+                    <td>{{ record[0] }}</td> <!-- Celda de datos -->
+                    {% for value in record[1:] %}
+                        <td>{{ value }}</td> <!-- Celdas de datos -->
+                    {% endfor %}
+                    <td>
+                        <a href="/editar/{{ selected_table }}/{{ record[0] }}" class="btn btn-primary">Editar</a> <!-- Enlace de edición con estilo de Bootstrap -->
+                        <a href="/eliminar/{{ selected_table }}/{{ record[0] }}" class="btn btn-danger">Eliminar</a> <!-- Enlace de eliminación con estilo de Bootstrap -->
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
     </div>
 
 {% endblock %}

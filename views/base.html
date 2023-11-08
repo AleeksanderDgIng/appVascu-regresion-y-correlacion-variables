@@ -26,32 +26,44 @@
                     <ul class="nav flex-column">
                         <li class="nav-item">
                             <a class="nav-link active" href="/">
-                                Inicio
+                                INICIO
                             </a>
                         </li>
                         <!-- Título "Gestión de Datos" -->
                         <li class="nav-item mt-3">
-                            <h6 class="nav-link disabled text-dark font-weight-bold">Gestión de Datos</h6>
+                            <h6 class="nav-link disabled text-dark font-weight-bold">GESTION DATOS</h6>
                         </li>
                         <!-- Menú "Gestión de Datos" -->
                         <li class="nav-item small">
-                            <a class="nav-link small disabled text-primary text-opacity-25" href="#">Crear Registros-Excel</a>
+                            <a class="nav-link small disabled text-primary text-opacity-25" href="#">CRUD a la BD santiago</a>
                         </li>
-                        <li class="nav-item small">
-                            <a class="nav-link small disabled text-primary text-opacity-25" href="#">Editar Registros</a>
-                        </li>
-                        <li class="nav-item small">
-                            <a class="nav-link small disabled text-primary text-opacity-25" href="#">Eliminar Registros</a>
-                        </li>
+                       
                         
                         <!-- Título "Estadístico" -->
                         <li class="nav-item mt-3">
-                            <h6 class="nav-link disabled text-dark font-weight-bold">Estadístico</h6>
+                            <h6 class="nav-link disabled text-dark font-weight-bold">ANALISIS</h6>
                         </li>
-                        <!-- Enlace a "Predictivo" -->
+                        <!-- Enlace a "Hacer Correlación" -->
+                        <!-- Enlace para hacer correlación -->
                         <li class="nav-item small">
-                            <a class="nav-link small" href="/predictivo">Predictivo Regresión</a>
+                            <a class="nav-link small" href="{{ url_for('seleccionar_tabla', action='correlacion') }}">Hacer Correlación</a>
                         </li>
+
+                        <!-- Enlace para hacer regresión lineal -->
+                        <li class="nav-item small">
+                            <a class="nav-link small" href="{{ url_for('seleccionar_tabla', action='regresion') }}">Hacer Regresión Lineal</a>
+                        </li>
+
+                         <!-- Título "Estadístico" -->
+                         <li class="nav-item mt-3">
+                            <h6 class="nav-link disabled text-dark font-weight-bold">VISUALIZACION</h6>
+                        </li>
+
+                        <!-- Menú "Gestión de Datos" -->
+                        <li class="nav-item small">
+                            <a class="nav-link small disabled text-primary text-opacity-25" href="#">Dashboard santiago</a>
+                        </li>
+
                     </ul>
                 </div>
             </nav>
@@ -75,6 +87,23 @@
                         </div>
                     {% endif %}
 
+                    <!-- Opciones de "Hacer Correlación" -->
+                    <div id="correlacion-options" style="display: none;">
+                        <h3>Opciones para Hacer Correlación</h3>
+                        
+                    </div>
+
+                    <!-- Opciones de "Hacer Regresión Lineal" -->
+                    <div id="regresion-options" style="display: none;">
+                        <h3>Opciones para Hacer Regresión Lineal</h3>
+
+                        
+
+
+
+
+                    </div>
+
                     <!-- Contenido de la página -->
                     <main class="mt-3">
                         {% block content %}{% endblock %}
@@ -83,5 +112,17 @@
             </main>
         </div>
     </div>
+    
+    <script>
+        document.getElementById("correlacion").addEventListener("click", function() {
+            document.getElementById("correlacion-options").style.display = "block";
+            document.getElementById("regresion-options").style.display = "none";
+        });
+
+        document.getElementById("regresion-lineal").addEventListener("click", function() {
+            document.getElementById("correlacion-options").style.display = "none";
+            document.getElementById("regresion-options").style.display = "block";
+        });
+    </script>
 </body>
 </html>

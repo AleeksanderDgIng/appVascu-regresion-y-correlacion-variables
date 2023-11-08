@@ -1,0 +1,30 @@
+{% extends "base.html" %} <!-- Extiende la plantilla base.html -->
+
+{% block content %} <!-- Inicio del bloque de contenido específico para esta plantilla -->
+<div class="container mt-4">
+    <h2>Seleccionar una tabla para {{ action }}</h2> <!-- Título de la página con el valor de la variable 'action' -->
+
+    <form method="POST" class="form mt-4">
+        <div class="mb-3">
+            <label for="table" class="form-label">Selecciona una tabla:</label> <!-- Etiqueta del campo de selección -->
+            <select name="table" id="table" class="form-select">
+                {% if tables %} <!-- Verifica si la variable 'tables' contiene datos -->
+                    {% for table in tables %} <!-- Inicia un bucle para recorrer las tablas disponibles -->
+                        <option value="{{ table }}" {% if table == selected_table %}selected{% endif %}>{{ table }}</option>
+                        <!-- Opción del campo de selección. Si 'table' coincide con 'selected_table', la opción se selecciona -->
+                    {% endfor %} <!-- Fin del bucle -->
+                {% else %}
+                    <option value="" disabled>No hay tablas disponibles</option>
+                    <!-- Si no hay tablas disponibles, muestra un mensaje en el campo de selección -->
+                {% endif %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary mb-5">Continuar</button> <!-- Botón para continuar con la selección -->
+    </form>
+    {% if error_message %} <!-- Verifica si hay un mensaje de error para mostrar -->
+        <div class="alert alert-danger mt-3">
+            {{ error_message }} <!-- Muestra el mensaje de error -->
+        </div>
+    {% endif %}
+</div>
+{% endblock %} <!-- Fin del bloque de contenido -->

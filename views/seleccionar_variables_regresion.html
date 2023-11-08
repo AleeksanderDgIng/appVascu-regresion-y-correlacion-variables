@@ -1,7 +1,8 @@
 {% extends "base.html" %}
 {% block content %}
     <div class="container mt-4">
-        <h2>Selecciona las variables para el análisis de regresión lineal</h2>
+        <h2>Seleccionar variables para Regresión Lineal en la tabla {{ table_name }}</h2>
+    
         <form method="POST" action="{{ url_for('realizar_regresion_lineal_route') }}">
             <input type="hidden" name="table" value="{{ table_name }}">
             <div class="mb-3">
@@ -32,5 +33,34 @@
                 {{ error_message }}
             </div>
         {% endif %}
+
+        
+        <h3>Registros de la tabla {{ table_name }}:</h3>
+        <a href="{{ url_for('crear_registro', table_name=selected_table) }}" class="btn btn-success">Crear Registros</a> <!-- Enlace con estilo de Bootstrap -->
+        <table class="table table-striped table-bordered mt-4">
+            <thead class="table-dark">
+                <tr>
+                    {% for column in columns %}
+                        <th>{{ column }}</th>
+                    {% endfor %}
+                    <th>Acciones</th> <!-- Encabezado de columna para acciones -->
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in records %}
+                    <tr>
+                        <td>{{ record[0] }}</td> <!-- Celda de datos -->
+                        {% for value in record[1:] %}
+                            <td>{{ value }}</td> <!-- Celdas de datos -->
+                        {% endfor %}
+                        <td>
+                            <a href="/editar/{{ selected_table }}/{{ record[0] }}" class="btn btn-primary">Editar</a> <!-- Enlace de edición con estilo de Bootstrap -->
+                            <a href="/eliminar/{{ selected_table }}/{{ record[0] }}" class="btn btn-danger">Eliminar</a> <!-- Enlace de eliminación con estilo de Bootstrap -->
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
     </div>
 {% endblock %}

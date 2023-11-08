@@ -8,6 +8,7 @@ from scipy.stats import pearsonr
 import mysql.connector
 from models.db_connection import get_db_connection
 
+# Función para analizar la correlación entre las variables de una tabla
 def analizar_correlacion(selected_table, selected_columns):
     error_message = None  # Inicializa error_message como None
 
@@ -15,7 +16,7 @@ def analizar_correlacion(selected_table, selected_columns):
         # Conectar a la base de datos
         print("Conexión exitosa a la base de datos MySQL.")
         
-        db = get_db_connection()
+        db = get_db_connection()  # Obtén una conexión a la base de datos desde la función
 
         if db.is_connected():
             cursor = db.cursor()
@@ -23,8 +24,8 @@ def analizar_correlacion(selected_table, selected_columns):
             # Obtener los datos de las columnas seleccionadas
             query = f"SELECT {', '.join(selected_columns)} FROM {selected_table}"
             print("Query SQL:", query)  # Agrega esta línea para verificar la consulta
-            cursor.execute(query)
-            result = cursor.fetchall()
+            cursor.execute(query)  # Ejecutar la consulta SQL
+            result = cursor.fetchall()  # Obtener los resultados de la consulta
             
              # Cerrar la conexión a la base de datos
             db.close()
@@ -58,9 +59,8 @@ def analizar_correlacion(selected_table, selected_columns):
                 plt.yticks(fontsize=11)
 
                 # Guardar el mapa de calor en la carpeta "static"
-                plt.savefig('static/mapa_de_calor.png')
-                print("Mapa de calor guardado correctamente en 'static/mapa_de_calor.png'")
-
+                plt.savefig('static/image_correlacion/mapa_de_calor.png')
+                print("Mapa de calor guardado correctamente en 'static/image_correlacion/mapa_de_calor.png'")
 
                 # Crear un mensaje para mostrar las dos variables con la correlación más alta
                 message = f"Las dos variables con la correlación más alta son: {variable1} y {variable2}. El coeficiente de correlación es {highest_corr}."
@@ -68,7 +68,7 @@ def analizar_correlacion(selected_table, selected_columns):
                 # Generar el mapa de calor y el mensaje como diccionario
                 result = {
                     "message": message,
-                    "heatmap_path": "static/mapa_de_calor.png"  # Ruta de la imagen del mapa de calor
+                    "heatmap_path": "static/image_correlacion/mapa_de_calor.png"  # Ruta de la imagen del mapa de calor
                 }
 
                 # Devolver el resultado como un diccionario
