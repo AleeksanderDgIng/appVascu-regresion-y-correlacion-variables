@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Resultado de la Regresión Lineal</h2>
+    <p>Gráfico de la regresión lineal:</p>
+    <!-- Gráfico de regresión -->
+    <img src="{{ url_for('static', filename='image_regresion/regresion_plot.png') }}" alt="Gráfico de Regresión" class="img-fluid">
+</div>
+
+
+<div class="container"> <!-- Contenedor principal de Bootstrap -->
+
+    <p>datos regresion:</p>
+    {% if success_message %}
+    <p class="success-message">{{ success_message }}</p>
+{% endif%}
+{% if beta_0 is defined and beta_1 is defined %}
+    <p>Coeficiente Beta 0: {{ beta_0 }}</p>
+    <p>Coeficiente Beta 1: {{ beta_1 }}</p>
+{% endif%}
+
+
+{% if r_squared is defined %}
+    <p>Coeficiente de Determinación (R²): {{ r_squared }}</p>
+{% endif%}
+
+    <h1>Predicción</h1>
+
+  
+
+    <br>
+
+        <h2>Resultados de la Predicción:</h2>
+        {% if success_message %}
+            <p class="alert alert-success">{{ success_message }}</p>
+        {% endif %}
+        <p class="lead">{{ prediction }}</p>
+
+        {% if error_message %}
+        <p class="alert alert-danger">{{ error_message }}</p>
+        {% endif %}
+
+
+    <br>
+
+    <a href="/" class="btn btn-secondary">Volver a la página de inicio</a>
+</div> <!-- Fin del contenedor principal de Bootstrap -->
+
+{% endblock %}

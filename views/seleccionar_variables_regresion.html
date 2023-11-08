@@ -3,7 +3,7 @@
     <div class="container mt-4">
         <h2>Seleccionar variables para Regresión Lineal en la tabla {{ table_name }}</h2>
     
-        <form method="POST" action="{{ url_for('realizar_regresion_lineal_route') }}">
+        <form method="POST" action="{{ url_for('regresion_lineal', table_name=table_name) }}">
             <input type="hidden" name="table" value="{{ table_name }}">
             <div class="mb-3">
                 <label for="x_variable" class="form-label">Variable para X:</label>
@@ -33,10 +33,9 @@
                 {{ error_message }}
             </div>
         {% endif %}
-
         
         <h3>Registros de la tabla {{ table_name }}:</h3>
-        <a href="{{ url_for('crear_registro', table_name=selected_table) }}" class="btn btn-success">Crear Registros</a> <!-- Enlace con estilo de Bootstrap -->
+        <a href="{{ url_for('crear_registro', table_name=table_name) }}" class="btn btn-success">Crear Registros</a> <!-- Enlace con estilo de Bootstrap -->
         <table class="table table-striped table-bordered mt-4">
             <thead class="table-dark">
                 <tr>
@@ -54,8 +53,8 @@
                             <td>{{ value }}</td> <!-- Celdas de datos -->
                         {% endfor %}
                         <td>
-                            <a href="/editar/{{ selected_table }}/{{ record[0] }}" class="btn btn-primary">Editar</a> <!-- Enlace de edición con estilo de Bootstrap -->
-                            <a href="/eliminar/{{ selected_table }}/{{ record[0] }}" class="btn btn-danger">Eliminar</a> <!-- Enlace de eliminación con estilo de Bootstrap -->
+                            <a href="/editar/{{ table_name }}/{{ record[0] }}" class="btn btn-primary">Editar</a> <!-- Enlace de edición con estilo de Bootstrap -->
+                            <a href="/eliminar/{{ table_name }}/{{ record[0] }}" class="btn btn-danger">Eliminar</a> <!-- Enlace de eliminación con estilo de Bootstrap -->
                         </td>
                     </tr>
                 {% endfor %}

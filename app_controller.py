@@ -3,9 +3,12 @@ from flask import Flask, render_template, request, redirect, url_for  # Importar
 import mysql.connector  # Importar el conector MySQL
 import xlrd  # Importar para procesar archivos de Excel
 
+from sklearn.linear_model import LinearRegression  # Importa el modelo de regresión lineal
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import StandardScaler  # Importa el escalador StandardScaler
+
 from models.db_connection import get_db_connection  # Importar la función de conexión a la base de datos
-from controllers.regresion_lineal import realizar_regresion_lineal  # Importar función de regresión lineal
-from controllers.regresion_lineal import model, scaler  # Importar el modelo de regresión lineal y el escalador
+from controllers.regresion_lineal import realizar_regresion_lineal, model, scaler
 from controllers.analizar_correlacion import analizar_correlacion  # Importar función para analizar correlación
 
 # Crear una instancia de la aplicación Flask
@@ -21,6 +24,7 @@ records = []  # Almacena los registros de la tabla seleccionada
 selected_table = None
 columns = []  # Lista de columnas de la tabla seleccionada
 
+
 # Función para conectar a la base de datos MySQL
 def connect_to_db():
     try:
@@ -33,25 +37,6 @@ def connect_to_db():
     except mysql.connector.Error as err:
         return None
  
-  
-# Función que se encarga de cargar y actualizar las variables globales antes de procesar cualquier solicitud
-@app.before_request
-def load_values():
-    global tables, selected_table, columns, records  # Declarar las variables globales que se actualizarán
-
-    # Intentar conectarse a la base de datos
-    db = connect_to_db()  # Llamar a la función para conectar a la base de datos
-    if db is not None:  # Si la conexión a la base de datos es exitosa
-        cursor = db.cursor()  # Crear un cursor para ejecutar consultas SQL
-        cursor.execute("SHOW TABLES")  # Consulta SQL para obtener la lista de tablas en la base de datos
-        tables = [table[0] for table in cursor]  # Obtener la lista de nombres de tablas desde el cursor y actualizar la variable global 'tables'
-        if selected_table:  # Si se ha seleccionado una tabla
-            cursor.execute(f"SHOW COLUMNS FROM {selected_table}")  # Consulta SQL para obtener las columnas de la tabla seleccionada
-            columns = [col[0] for col in cursor.fetchall()]  # Obtener la lista de nombres de columnas desde el cursor y actualizar la variable global 'columns'
-            cursor.execute(f"SELECT * FROM {selected_table}")  # Consulta SQL para obtener todos los registros de la tabla seleccionada
-            records = cursor.fetchall()  # Obtener los registros desde el cursor y actualizar la variable global 'records'
-        db.close()  # Cerrar la conexión a la base de datos para liberar recursos
-
 
 # Ruta principal ("/") para mostrar la página index.html
 @app.route('/', methods=['GET'])
@@ -104,56 +89,140 @@ def seleccionar_tabla(action):
     # Renderizar la plantilla 'seleccionar_tabla.html' con los datos obtenidos
     return render_template('seleccionar_tabla.html', action=action, tables=tables, selected_table=selected_table, error_message=error_message, columns=columns, records=records)
 
-# Ruta para editar un registro específico
-@app.route('/editar/<table_name>/<int:record_id>', methods=['GET', 'POST'])
-def editar_registro(table_name, record_id):
-    error_message = None
-    success_message = None
-    columns = []  # Lista de columnas para mostrar en el formulario
 
-    if not columns:
-        db = connect_to_db()
-        if db is not None:
+#REGRESION LINEAL
+
+#ruta que permite al usuario seleccionar las variables para el análisis de regresión en una tabla de la base de datos.
+@app.route('/seleccionar-variables-regresion/<table_name>', methods=['GET', 'POST'])
+def seleccionar_variables_regresion(table_name):
+    error_message = None
+    selected_columns = []
+    records = []  # Almacenará los registros de la tabla seleccionada
+
+    # Obtén la lista de columnas de la tabla seleccionada
+    db = connect_to_db()  # Se llama a la función para conectar a la base de datos
+    if db is not None:  # Si la conexión a la base de datos es exitosa
+        cursor = db.cursor()  # Crear un cursor para ejecutar consultas SQL
+        cursor.execute(f"SHOW COLUMNS FROM {table_name}")  # Consulta SQL para obtener la lista de columnas de la tabla
+        columns = [col[0] for col in cursor.fetchall()]  # Obtener la lista de columnas desde el cursor
+        cursor.execute(f"SELECT * FROM {table_name}")  # Consulta SQL para obtener los registros de la tabla
+        records = cursor.fetchall()  # Obtener los registros desde el cursor
+        db.close()  # Cerrar la conexión a la base de datos
+    else:
+        columns = []  # Si no se puede conectar a la base de datos, establece la lista de columnas como vacía
+
+    if request.method == 'POST':  # Si se envía un formulario mediante el método POST
+        selected_columns = request.form.getlist('variables')  # Obtiene la lista de variables seleccionadas desde el formulario
+
+        if len(selected_columns) != 2:  # Comprueba si se han seleccionado exactamente dos variables (una para X y otra para Y) para realizar un análisis de regresión.
+            error_message = "Selecciona exactamente dos variables, una para X y otra para Y, para el análisis de regresión."
+
+    return render_template('seleccionar_variables_regresion.html', error_message=error_message or "", columns=columns, table_name=table_name, selected_columns=selected_columns, records=records)
+
+
+# Función para verificar si la tabla y las variables son válidas
+def verificar_variables(selected_table, x_variable, y_variable):
+    try:
+        column_names = obtener_nombres_columnas(selected_table)
+        if x_variable not in column_names:
+            raise Exception(f"La variable X '{x_variable}' no es válida para la tabla '{selected_table}'.")
+        if y_variable not in column_names:
+            raise Exception(f"La variable Y '{y_variable}' no es válida para la tabla '{selected_table}'.")
+        return True
+    except Exception as e:
+        return str(e)
+
+# Función para obtener los nombres de las columnas de la tabla
+def obtener_nombres_columnas(selected_table):
+    try:
+        # Conexión a la base de datos
+        db = get_db_connection()
+
+        if db.is_connected():
             cursor = db.cursor()
-            cursor.execute(f"SHOW COLUMNS FROM {table_name}")
-            columns = [col[0] for col in cursor.fetchall()]
+            query = f"SHOW COLUMNS FROM {selected_table}"
+            cursor.execute(query)
+            result = cursor.fetchall()
             db.close()
+
+            if result:
+                column_names = [row[0] for row in result]
+                return column_names
+            else:
+                raise Exception(f"No se encontraron columnas en la tabla '{selected_table}'.")
+        else:
+            raise Exception("La conexión a la base de datos no está activa.")
+    except Exception as e:
+        raise Exception(f"Error al conectar a la base de datos: {e}")
+
+
+
+@app.route('/regresion_lineal/<table_name>', methods=['POST'])
+def regresion_lineal(table_name):
+    success_message = ""
+    error_message = ""
+    prediction = None
 
     if request.method == 'POST':
-        # Recupera los datos actualizados del formulario
-        updated_data = {column: request.form[column] for column in columns}
-        db = connect_to_db()
-        if db is not None:
-            cursor = db.cursor()
+        x_variable = request.form.get('x_variable')
+        y_variable = request.form.get('y_variable')
 
-            # Verifica si hay columnas para actualizar
-            if not columns:
-                error_message = "No se pueden actualizar registros sin columnas."
+        try:
+            verification_result = verificar_variables(table_name, x_variable, y_variable)
+            if verification_result is True:
+                
+                
+                # Realizar la regresión lineal y calcular beta_0, beta_1 y r_squared
+                success_message, error_message, prediction, beta_0, beta_1, r_squared = realizar_regresion_lineal(table_name, x_variable, y_variable)
+
+                
+                if success_message:
+                    global model, scaler
+                    model = success_message  # Almacena el modelo en una variable global
+                    scaler = error_message  # Almacena el escalador en una variable global
             else:
-                # Construye la consulta SQL para actualizar el registro
-                update_query = f"UPDATE {table_name} SET " + ", ".join([f"{column} = %s" for column in updated_data.keys()])
-                update_query += " WHERE id = %s"  # Asume que hay una columna 'id' para identificar el registro
+                error_message = verification_result
 
-                # Ejecuta la consulta SQL para actualizar el registro
-                try:
-                    cursor.execute(update_query, list(updated_data.values()) + [int(record_id)])
-                    db.commit()
-                    success_message = "Registro actualizado con éxito."
-                except mysql.connector.Error as err:
-                    db.rollback()
-                    error_message = f"No se pudo actualizar el registro: {err}"
+        except ValueError:
+            error_message = "Ingresa un valor válido para X."
 
-            db.close()
+    return render_template('resultado_regresion.html', table_name=table_name, error_message=error_message, success_message=success_message, prediction=prediction, beta_0=beta_0, beta_1=beta_1, r_squared=r_squared)
 
-    # Obtener los datos del registro que se está editando
-    db = connect_to_db()
-    if db is not None:
-        cursor = db.cursor()
-        cursor.execute(f"SELECT * FROM {table_name} WHERE id = %s", (record_id,))
-        record = cursor.fetchone()
-        db.close()
 
-    return render_template('editar.html', error_message=error_message or "", success_message=success_message or "", columns=columns, record=record, record_id=record_id, table_name=table_name)
+
+# Ruta para mostrar los resultados de la regresión
+@app.route('/resultado-regresion', methods=['GET'])
+def resultado_regresion():
+    return render_template('regresion.html', success_message=success_message, error_message=None)
+
+
+# Ruta para realizar la predicción
+@app.route('/realizar-prediccion', methods=['POST'])
+def realizar_prediccion():
+    prediction = None  # Inicializa la variable de predicción
+
+    if request.method == 'POST':
+        x_variable = request.form.get('x_variable')  # Obtiene el valor de X del formulario
+
+        try:
+            x_variable = float(x_variable)  # Intenta convertir el valor de X a un número de punto flotante
+        except ValueError:
+            error_message = "Ingresa un valor válido para X."  # Maneja errores si el valor ingresado para X no es válido (por ejemplo, no es un número)
+            return render_template('regresion.html', prediction=None, error_message=error_message)
+
+        if scaler is None or model is None:
+            return "Debes realizar la regresión lineal primero para configurar el scaler y el modelo."
+
+        x_variable_std = scaler.transform([[x_variable]])  # Estandariza el valor de X
+
+        # Realiza la predicción con el modelo
+        y_pred = model.predict(x_variable_std)
+        y_pred = scaler.inverse_transform(y_pred)  # Desescala la predicción
+
+        # Asigna la predicción a la variable de resultado
+        prediction = f"Predicción para X={x_variable}: Y={y_pred[0, 0]:.2f}"
+
+    return render_template('regresion.html', prediction=prediction)
 
 
 # Ruta para crear un nuevo registro desde un archivo Excel
@@ -218,43 +287,6 @@ def crear_registro(table_name):
     return render_template('crear_registro.html', error_message=error_message or "", success_message=success_message or "", table_name=table_name)
 
 
-# Ruta para eliminar un registro específico
-@app.route('/eliminar/<table_name>/<int:record_id>', methods=['GET', 'POST'])
-def eliminar_registro(table_name, record_id):
-    error_message = None  # Inicializa una variable para mensajes de error
-    success_message = None  # Inicializa una variable para mensajes de éxito
-
-    if request.method == 'POST':
-        db = connect_to_db()  # Conecta a la base de datos
-        if db is not None:
-            cursor = db.cursor()  # Crea un cursor para ejecutar consultas SQL
-
-            # Construye la consulta SQL para eliminar el registro
-            delete_query = f"DELETE FROM {table_name} WHERE id = %s"  # Asume que hay una columna 'id' para identificar el registro
-
-            try:
-                cursor.execute(delete_query, (record_id,))  # Ejecuta la consulta SQL para eliminar el registro
-                db.commit()  # Confirma los cambios en la base de datos
-                success_message = "Registro eliminado con éxito."
-            except mysql.connector.Error as err:
-                db.rollback()  # En caso de error, deshace la transacción
-                error_message = f"No se pudo eliminar el registro: {err}"
-            
-            db.close()  # Cierra la conexión a la base de datos
-
-    # Obtener los datos del registro que se está eliminando
-    db = connect_to_db()  # Conecta a la base de datos nuevamente
-    if db is not None:
-        cursor = db.cursor()  # Crea un cursor para ejecutar consultas SQL
-
-        # Construye una consulta SQL para obtener los datos del registro específico
-        cursor.execute(f"SELECT * FROM {table_name} WHERE id = %s", (record_id,))
-        record = cursor.fetchone()  # Obtiene el registro
-        db.close()  # Cierra la conexión a la base de datos
-
-    return render_template('eliminar.html', error_message=error_message or "", success_message=success_message or "", record=record, table_name=table_name)
-
-
 #CORRELACION
 
 # Ruta para mostrar el mapa de calor de correlación
@@ -302,114 +334,6 @@ def seleccionar_variables_correlacion(table_name):
             error_message = "Selecciona al menos dos variables para el análisis de correlación."
 
     return render_template('seleccionar_variables_correlacion.html', error_message=error_message or "", columns=columns, table_name=table_name, selected_columns=selected_columns, records=records)
-
-
-#REGRESION LINEAL
-
-#ruta que permite al usuario seleccionar las variables para el análisis de regresión en una tabla de la base de datos.
-@app.route('/seleccionar-variables-regresion/<table_name>', methods=['GET', 'POST'])
-def seleccionar_variables_regresion(table_name):
-    error_message = None
-    selected_columns = []
-    records = []  # Almacenará los registros de la tabla seleccionada
-
-    # Obtén la lista de columnas de la tabla seleccionada
-    db = connect_to_db()  # Se llama a la función para conectar a la base de datos
-    if db is not None:  # Si la conexión a la base de datos es exitosa
-        cursor = db.cursor()  # Crear un cursor para ejecutar consultas SQL
-        cursor.execute(f"SHOW COLUMNS FROM {table_name}")  # Consulta SQL para obtener la lista de columnas de la tabla
-        columns = [col[0] for col in cursor.fetchall()]  # Obtener la lista de columnas desde el cursor
-        cursor.execute(f"SELECT * FROM {table_name}")  # Consulta SQL para obtener los registros de la tabla
-        records = cursor.fetchall()  # Obtener los registros desde el cursor
-        db.close()  # Cerrar la conexión a la base de datos
-    else:
-        columns = []  # Si no se puede conectar a la base de datos, establece la lista de columnas como vacía
-
-    if request.method == 'POST':  # Si se envía un formulario mediante el método POST
-        selected_columns = request.form.getlist('variables')  # Obtiene la lista de variables seleccionadas desde el formulario
-
-        if len(selected_columns) != 2:  # Comprueba si se han seleccionado exactamente dos variables (una para X y otra para Y) para realizar un análisis de regresión.
-            error_message = "Selecciona exactamente dos variables, una para X y otra para Y, para el análisis de regresión."
-
-    return render_template('seleccionar_variables_regresion.html', error_message=error_message or "", columns=columns, table_name=table_name, selected_columns=selected_columns, records=records)
-
-
-# Ruta para la página de regresión lineal
-@app.route('/regresion-lineal', methods=['GET', 'POST'])
-def regresion_lineal():
-    selected_table = request.args.get('table')  # Obtiene el nombre de la tabla desde la URL
-    x_variable = request.args.get('x_variable')  # Obtiene la variable X desde la URL
-    y_variable = request.args.get('y_variable')  # Obtiene la variable Y desde la URL
-    success_message = None
-    error_message = None
-    prediction = None  # Inicializa la variable de predicción
-
-    if request.method == 'POST':  # Si se envía un formulario mediante el método POST
-        try:
-            # Obtener el valor de entrada de X desde el formulario
-            input_x = float(request.form['x_variable'])  # Obtiene el valor de X ingresado en el formulario como un número de punto flotante
-            
-            # Inicializa la variable de predicción
-            prediction = None
-            
-            # Llamar a la función de regresión lineal con el valor de entrada
-            success_message, error_message, prediction = realizar_regresion_lineal(selected_table, x_variable, y_variable, input_x)
-        except ValueError:
-            error_message = "Ingresa un valor válido para X."  # Maneja errores si el valor ingresado para X no es válido (por ejemplo, no es un número)
-
-    return render_template('regresion.html', success_message=success_message, error_message=error_message, prediction=prediction)
-
-#ruta para realizar la regresión lineal, que se activa cuando se envía un formulario mediante el método POST.
-@app.route('/realizar-regresion-lineal', methods=['POST'])
-def realizar_regresion_lineal_route():
-    error_message = None
-    success_message = ""  # Define success_message como una cadena vacía al principio
-    selected_table = request.form.get('table')  # Obtiene el nombre de la tabla desde el formulario
-    x_variable = request.form.get('x_variable')  # Obtiene la variable X desde el formulario
-    y_variable = request.form.get('y_variable')  # Obtiene la variable Y desde el formulario
-
-    try:
-        print(f"Realizando regresión lineal para {selected_table} con variables X: {x_variable}, Y: {y_variable}")
-        
-        # Llama a la función para realizar la regresión lineal con los parámetros especificados
-        success_message, error_message = realizar_regresion_lineal(selected_table, x_variable, y_variable)
-        
-        print(f"Mensaje de éxito: {success_message}")
-        print(f"Mensaje de error: {error_message}")
-    except Exception as e:
-        error_message = f"Error en la regresión lineal: {str(e)}"
-
-    return redirect(url_for('resultado_regresion'))
-
-
-# Ruta para ingresar nuevos datos y realizar predicciones
-@app.route('/realizar-prediccion', methods=['POST'])
-def realizar_prediccion():
-    prediction = None  # Inicializa la variable de predicción
-
-    if request.method == 'POST':
-        x_variable = float(request.form.get('x_variable'))  # Obtiene el valor de X del formulario
-        
-        # Verifica si la función realizar_regresion_lineal ha sido llamada previamente para configurar el scaler
-        if scaler is None:
-            return "Debes realizar la regresión lineal primero para configurar el scaler."
-        
-        x_variable_std = scaler.transform([[x_variable]])  # Estandariza el valor de X
-
-        # Realiza la predicción con el modelo
-        y_pred = model.predict(x_variable_std)
-        y_pred = scaler.inverse_transform(y_pred)  # Desescala la predicción
-
-        # Asigna la predicción a la variable de resultado
-        prediction = f"Predicción para X={x_variable}: Y={y_pred[0, 0]:.2f}"
-
-    return render_template('regresion.html', prediction=prediction)
-
-
-# Ruta para mostrar los resultados de la regresión
-@app.route('/resultado-regresion', methods=['GET'])
-def resultado_regresion():
-    return render_template('regresion.html', success_message=success_message, error_message=None)
 
 
 # Iniciar la aplicación si este archivo se ejecuta directamente
