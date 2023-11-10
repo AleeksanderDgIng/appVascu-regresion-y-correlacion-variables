@@ -1,19 +1,24 @@
-# Importar bibliotecas
+# app_controller.py
+
 from flask import Flask, render_template, request, redirect, url_for  # Importar módulos de Flask
 import mysql.connector  # Importar el conector MySQL
 import xlrd  # Importar para procesar archivos de Excel
-
 from sklearn.linear_model import LinearRegression  # Importa el modelo de regresión lineal
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.preprocessing import StandardScaler  # Importa el escalador StandardScaler
-
 from models.db_connection import get_db_connection  # Importar la función de conexión a la base de datos
-from controllers.regresion_lineal import realizar_regresion_lineal, model, scaler
+from controllers.regresion_lineal import RegresionLinealModel# Importa la clase
 from controllers.analizar_correlacion import analizar_correlacion  # Importar función para analizar correlación
+from models.db_connection import get_db_connection
+import pickle
+
 
 # Crear una instancia de la aplicación Flask
 app = Flask(__name__, template_folder='views')
 app.debug = False  # Desactivar el modo de depuración de la aplicación
+
+# Inicializar la clase RegresionLinealModel
+regresion_model = RegresionLinealModel()
 
 # Definir success_message como cadena vacía al principio
 success_message = ""
@@ -23,6 +28,7 @@ tables = []  # Almacena los nombres de las tablas en la base de datos
 records = []  # Almacena los registros de la tabla seleccionada
 selected_table = None
 columns = []  # Lista de columnas de la tabla seleccionada
+
 
 
 # Función para conectar a la base de datos MySQL
@@ -36,14 +42,12 @@ def connect_to_db():
             return None
     except mysql.connector.Error as err:
         return None
- 
 
 # Ruta principal ("/") para mostrar la página index.html
 @app.route('/', methods=['GET'])
 def index():
     # Renderiza la plantilla index.html
     return render_template('index.html')
-
 
 # Ruta para procesar la selección de una tabla en la base de datos y mostrar opciones de acción
 @app.route('/seleccionar-tabla/<action>', methods=['GET', 'POST'])
@@ -91,7 +95,6 @@ def seleccionar_tabla(action):
 
 
 #REGRESION LINEAL
-
 #ruta que permite al usuario seleccionar las variables para el análisis de regresión en una tabla de la base de datos.
 @app.route('/seleccionar-variables-regresion/<table_name>', methods=['GET', 'POST'])
 def seleccionar_variables_regresion(table_name):
@@ -118,7 +121,6 @@ def seleccionar_variables_regresion(table_name):
             error_message = "Selecciona exactamente dos variables, una para X y otra para Y, para el análisis de regresión."
 
     return render_template('seleccionar_variables_regresion.html', error_message=error_message or "", columns=columns, table_name=table_name, selected_columns=selected_columns, records=records)
-
 
 # Función para verificar si la tabla y las variables son válidas
 def verificar_variables(selected_table, x_variable, y_variable):
@@ -156,12 +158,15 @@ def obtener_nombres_columnas(selected_table):
         raise Exception(f"Error al conectar a la base de datos: {e}")
 
 
-
+# Ruta para realizar la regresión lineal
 @app.route('/regresion_lineal/<table_name>', methods=['POST'])
 def regresion_lineal(table_name):
     success_message = ""
     error_message = ""
     prediction = None
+    beta_0 = None
+    beta_1 = None
+    r_squared = None
 
     if request.method == 'POST':
         x_variable = request.form.get('x_variable')
@@ -170,23 +175,14 @@ def regresion_lineal(table_name):
         try:
             verification_result = verificar_variables(table_name, x_variable, y_variable)
             if verification_result is True:
-                
-                
+
                 # Realizar la regresión lineal y calcular beta_0, beta_1 y r_squared
-                success_message, error_message, prediction, beta_0, beta_1, r_squared = realizar_regresion_lineal(table_name, x_variable, y_variable)
-
-                
-                if success_message:
-                    global model, scaler
-                    model = success_message  # Almacena el modelo en una variable global
-                    scaler = error_message  # Almacena el escalador en una variable global
-            else:
-                error_message = verification_result
-
+                success_message, error_message, prediction, beta_0, beta_1, r_squared = regresion_model.realizar_regresion_lineal(table_name, x_variable, y_variable)
         except ValueError:
             error_message = "Ingresa un valor válido para X."
 
     return render_template('resultado_regresion.html', table_name=table_name, error_message=error_message, success_message=success_message, prediction=prediction, beta_0=beta_0, beta_1=beta_1, r_squared=r_squared)
+
 
 
 
@@ -196,33 +192,27 @@ def resultado_regresion():
     return render_template('regresion.html', success_message=success_message, error_message=None)
 
 
+
 # Ruta para realizar la predicción
 @app.route('/realizar-prediccion', methods=['POST'])
 def realizar_prediccion():
     prediction = None  # Inicializa la variable de predicción
+    error_message = None  # Inicializa el mensaje de error
 
     if request.method == 'POST':
         x_variable = request.form.get('x_variable')  # Obtiene el valor de X del formulario
 
         try:
             x_variable = float(x_variable)  # Intenta convertir el valor de X a un número de punto flotante
+            prediction, error_message = regresion_model.realizar_prediccion(x_variable)
+
         except ValueError:
-            error_message = "Ingresa un valor válido para X."  # Maneja errores si el valor ingresado para X no es válido (por ejemplo, no es un número)
-            return render_template('regresion.html', prediction=None, error_message=error_message)
+            error_message = "Ingresa un valor válido para X."
 
-        if scaler is None or model is None:
-            return "Debes realizar la regresión lineal primero para configurar el scaler y el modelo."
+    return render_template('resultado_regresion.html', prediction=prediction, error_message=error_message)
 
-        x_variable_std = scaler.transform([[x_variable]])  # Estandariza el valor de X
 
-        # Realiza la predicción con el modelo
-        y_pred = model.predict(x_variable_std)
-        y_pred = scaler.inverse_transform(y_pred)  # Desescala la predicción
 
-        # Asigna la predicción a la variable de resultado
-        prediction = f"Predicción para X={x_variable}: Y={y_pred[0, 0]:.2f}"
-
-    return render_template('regresion.html', prediction=prediction)
 
 
 # Ruta para crear un nuevo registro desde un archivo Excel

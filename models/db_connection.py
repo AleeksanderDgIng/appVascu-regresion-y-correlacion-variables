@@ -1,5 +1,9 @@
+# models/db_connection.py
+
+
 import mysql.connector
 
+# Conexion a la base de datos
 def get_db_connection():
     try:
         db = mysql.connector.connect(
@@ -11,3 +15,4 @@ def get_db_connection():
         return db
     except mysql.connector.Error as err:
         return None
+

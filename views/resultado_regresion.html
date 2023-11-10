@@ -1,49 +1,84 @@
+<!-- resultado_regresion.html -->
+
 {% extends "base.html" %}
 {% block content %}
 <div class="container mt-4">
-    <h2>Resultado de la Regresión Lineal</h2>
-    <p>Gráfico de la regresión lineal:</p>
+    <h2>Modelo Entrenado</h2>
+
+    {% if success_message %}
+    <p class="alert alert-success result-message">{{ success_message }} ¡EXITO!</p>
+    {% endif %}
+
+    <p class="lead">{{ prediction }} valor de la prediccion</p>
+
+    {% if error_message %}
+    <p class="alert alert-danger result-message">{{ error_message }}</p>
+    {% endif %}
+
     <!-- Gráfico de regresión -->
-    <img src="{{ url_for('static', filename='image_regresion/regresion_plot.png') }}" alt="Gráfico de Regresión" class="img-fluid">
+    <img src="{{ url_for('static', filename='image_regresion/regresion_plot.png') }}" alt="Gráfico de Regresión"
+        class="img-fluid">
 </div>
 
+<div class="container mt-4">
+    <h3>Información regresión lineal realizada:</h3>
+    <p class="fs-5">Coeficientes estimados durante el proceso de entrenamiento del modelo
+        para minimizar el error en las predicciones.</p>
 
-<div class="container"> <!-- Contenedor principal de Bootstrap -->
+    <!-- Inicia una condición que verifica si las variables beta_0 y beta_1 están definidas.
+    En el contexto de una regresión lineal,
+    estos son los coeficientes estimados de la ecuación de regresión. -->
+    {% if beta_0 is defined and beta_1 is defined %}
 
-    <p>datos regresion:</p>
-    {% if success_message %}
-    <p class="success-message">{{ success_message }}</p>
-{% endif%}
-{% if beta_0 is defined and beta_1 is defined %}
-    <p>Coeficiente Beta 0: {{ beta_0 }}</p>
-    <p>Coeficiente Beta 1: {{ beta_1 }}</p>
-{% endif%}
+    <!--Beta 0: es el valor de la variable dependiente cuando todas las variables independientes son cero.
+    Es el punto donde la línea de regresión corta el eje y. -->
+    <p>Coeficiente Intercepto: {{ beta_0 }}</p>
 
+    <!-- Beta 1: Representa el cambio promedio en la variable dependiente por unidad de cambio en la variable independiente. 
+    En otras palabras, es la pendiente de la línea de regresión. -->
+    <p>Coeficiente Pendiente: {{ beta_1 }}</p>
 
-{% if r_squared is defined %}
+    {% endif %} <!-- Finaliza la condición -->
+
+    <!-- Inicia una condición que verifica si la variable r_squared está definida.
+    En el contexto de la regresión lineal, esto representa el coeficiente de determinación (R²),
+    que indica la proporción de la variación en la variable dependiente que es predecible
+    a partir de la variable independiente(s). -->
+    {% if r_squared is defined %}
     <p>Coeficiente de Determinación (R²): {{ r_squared }}</p>
-{% endif%}
+    {% endif %}
+</div>
 
+<div class="container">
     <h1>Predicción</h1>
 
-  
+    {% if error_message %}
+    <p class="error-message">{{ error_message }}</p>
+    {% endif %}
 
-    <br>
+    {% if not success_message %}
+    <p class="info-message">Primero realiza el análisis de regresión.</p>
+    {% else %}
+        <form method="POST" action="/realizar-prediccion">
+            <label for="x_variable">Ingresa el valor de la variable Explicativa X(Independiente):</label>
+            <input type="number" step="any" name="x_variable" id="x_variable" required>
+            <button type="submit" class="btn btn-primary">Realizar Predicción</button>
+        </form>
+
+        <br>
 
         <h2>Resultados de la Predicción:</h2>
+
         {% if success_message %}
-            <p class="alert alert-success">{{ success_message }}</p>
-        {% endif %}
-        <p class="lead">{{ prediction }}</p>
-
-        {% if error_message %}
-        <p class="alert alert-danger">{{ error_message }}</p>
+        <p class="success-message">{{ success_message }} COMPLETA</p>
         {% endif %}
 
+        {% if prediction %}
+        <p class="prediction-message">{{ prediction }} Otro</p>
+        {% endif %}
+        <p class="lead">{{ prediction }} respuesta</p>
+    {% endif %}
+</div>
 
-    <br>
-
-    <a href="/" class="btn btn-secondary">Volver a la página de inicio</a>
-</div> <!-- Fin del contenedor principal de Bootstrap -->
 
 {% endblock %}
