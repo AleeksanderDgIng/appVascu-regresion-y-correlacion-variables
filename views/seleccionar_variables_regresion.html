@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="container mt-4">
-    <h2 class="mb-4">Datos de entrenamiento de la tabla: {{ table_name }}</h2>
+    <h2 class="mb-4">Datos de entrenamiento tomados de: {{ table_name }}</h2>
 
     <form method="POST" action="{{ url_for('regresion_lineal', table_name=table_name) }}">
         <input type="hidden" name="table" value="{{ table_name }}">
