@@ -161,12 +161,17 @@ def obtener_nombres_columnas(selected_table):
 # Ruta para realizar la regresión lineal
 @app.route('/regresion_lineal/<table_name>', methods=['POST'])
 def regresion_lineal(table_name):
-    success_message = ""
     error_message = ""
+    success_message = ""
     prediction = None
     beta_0 = None
     beta_1 = None
     r_squared = None
+    varianza_residual = None
+    correlation_coefficient = None
+    x_variable = None
+    y_variable = None
+    registros = None
 
     if request.method == 'POST':
         x_variable = request.form.get('x_variable')
@@ -175,13 +180,29 @@ def regresion_lineal(table_name):
         try:
             verification_result = verificar_variables(table_name, x_variable, y_variable)
             if verification_result is True:
-
-                # Realizar la regresión lineal y calcular beta_0, beta_1 y r_squared
-                success_message, error_message, prediction, beta_0, beta_1, r_squared = regresion_model.realizar_regresion_lineal(table_name, x_variable, y_variable)
+                (
+                    success_message, error_message, prediction, beta_0, beta_1,
+                    r_squared, varianza_residual, correlation_coefficient, registros
+                ) = regresion_model.realizar_regresion_lineal(table_name, x_variable, y_variable)
         except ValueError:
             error_message = "Ingresa un valor válido para X."
 
-    return render_template('resultado_regresion.html', table_name=table_name, error_message=error_message, success_message=success_message, prediction=prediction, beta_0=beta_0, beta_1=beta_1, r_squared=r_squared)
+    context = {
+        'table_name': table_name,
+        'x_variable': x_variable,
+        'y_variable': y_variable,
+        'error_message': error_message,
+        'success_message': success_message,
+        'prediction': prediction,
+        'beta_0': beta_0,
+        'beta_1': beta_1,
+        'r_squared': r_squared,
+        'varianza_residual': varianza_residual,
+        'correlation_coefficient': correlation_coefficient,
+        'registros': registros  # Agrega esta línea
+    }
+
+    return render_template('resultado_regresion.html', **context)
 
 
 
@@ -196,20 +217,25 @@ def resultado_regresion():
 # Ruta para realizar la predicción
 @app.route('/realizar-prediccion', methods=['POST'])
 def realizar_prediccion():
-    prediction = None  # Inicializa la variable de predicción
-    error_message = None  # Inicializa el mensaje de error
+    result = None  # Inicializa el resultado
 
     if request.method == 'POST':
         x_variable = request.form.get('x_variable')  # Obtiene el valor de X del formulario
 
         try:
             x_variable = float(x_variable)  # Intenta convertir el valor de X a un número de punto flotante
-            prediction, error_message = regresion_model.realizar_prediccion(x_variable)
+            result = regresion_model.realizar_prediccion(x_variable)
 
         except ValueError:
-            error_message = "Ingresa un valor válido para X."
+            result = {
+                'x_variable': None,
+                'y_variable': None,
+                
+                'prediction': None,
+                'error_message': "Ingresa un valor válido para X."
+            }
 
-    return render_template('resultado_regresion.html', prediction=prediction, error_message=error_message)
+    return render_template('resultado_regresion.html', result=result)
 
 
 
