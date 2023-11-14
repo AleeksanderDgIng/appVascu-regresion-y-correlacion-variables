@@ -1,0 +1,205 @@
+{% extends "index.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4 text-center">Seleccione la tabla de los datos a predecir</h2>
+
+    <form method="POST" style="max-width: 800px; margin: 0 auto;" action="{{ url_for('seleccionar_tabla', action=action) }}" class="mb-4">
+        <div class="mb-3">
+            <label for="table" class="form-label">Selecciona una tabla:</label>
+            <div class="input-group">
+                <select name="table" id="table" class="form-select">
+                    {% if tables %}
+                        {% for table in tables %}
+                            <option value="{{ table }}" {% if table == selected_table %}selected{% endif %}>{{ table }}</option>
+                        {% endfor %}
+                    {% else %}
+                        <option value="" disabled selected>No hay tablas disponibles</option>
+                    {% endif %}
+                </select>
+                <button type="submit" class="btn btn-lg btn-success" data-bs-toggle="popover" data-bs-trigger="hover" data-bs-placement="top" title="Continuar" data-bs-content="Haz clic aquí para continuar con la selección de la tabla. Una vez que hayas seleccionado una tabla, podrás realizar acciones como entrenar un modelo o verificar coeficientes de correlación.">Continuar</button>
+
+            </div>
+        </div>
+    </form>
+
+    {% if selected_table %}
+        {% if action == 'seleccion' %}
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card h-100 shadow p-3 mb-5 bg-white rounded">
+                        <div class="card-body">
+                            <h3 class="mb-4">Variables evaluar correlación en la tabla: {{ selected_table }}</h3>
+
+                            <form method="POST" action="{{ url_for('mostrar_mapa_de_calor', table_name=selected_table) }}" onsubmit="return validateForm()">
+                                <div class="row">
+                                    <div class="col-md-12 mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="select-all-checkbox">
+                                            <label class="form-check-label" for="select-all-checkbox">
+                                                Seleccionar/Deseleccionar Todo
+                                            </label>
+                                        </div>
+                                    </div>
+                                    {% for column in columns %}
+                                        <div class="col-md-3 mb-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="selected_columns" value="{{ column }}" id="{{ column }}">
+                                                <label class="form-check-label" for="{{ column }}">
+                                                    {{ column }}
+                                                </label>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                                <div class="d-flex justify-content-center">
+                                    <button type="submit" class="btn btn-lg btn-success" data-bs-toggle="popover" data-bs-trigger="hover" data-bs-placement="top" title="Verificar coeficiente de correlación" data-bs-content="Haz clic aquí para verificar el coeficiente de correlación. Esta acción te proporcionará información sobre la fuerza y dirección de la relación entre las variables seleccionadas, lo que es crucial para comprender la asociación entre ellas en tus datos.">Validar correlación</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100 shadow p-3 mb-5 bg-white rounded">
+                        <div class="card-body">
+                            <h3 class="mb-4">Datos de entrenamiento tomados de: {{ selected_table }}</h3>
+
+                            <form method="POST" action="{{ url_for('regresion_lineal', table_name=selected_table) }}" onsubmit="return validateRegressionForm()">
+                                <input type="hidden" name="table" value="{{ selected_table }}">
+                                <div class="mb-3">
+                                    <label for="x_variable" class="form-label">Variable explicativa para X (Independiente):</label>
+                                    <select name="x_variable" id="x_variable" class="form-select">
+                                        <option value="" selected disabled>Seleccionar variable</option>
+                                        {% for column in columns %}
+                                            <option value="{{ column }}">{{ column }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="y_variable" class="form-label">Variable predecible para Y (Dependiente):</label>
+                                    <select name="y_variable" id="y_variable" class="form-select">
+                                        <option value="" selected disabled>Seleccionar variable</option>
+                                        {% for column in columns %}
+                                            <option value="{{ column }}">{{ column }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="d-flex justify-content-center">
+                                    <button type="submit" class="btn btn-lg btn-success" data-bs-toggle="popover" data-bs-trigger="hover" data-bs-placement="top" title="Entrenar el modelo" data-bs-content="Haz clic aquí para entrenar el modelo de regresión lineal. Este proceso te permitirá analizar la relación entre las variables seleccionadas y construir un modelo predictivo. Al entrenar el modelo, podrás realizar predicciones basadas en los datos existentes, lo que es esencial para tomar decisiones informadas en función de los patrones identificados en tus datos.">Entrenar el modelo</button>
+                                </div>
+                            </form>                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <h3 class="mt-5">Registros de la tabla {{ selected_table }}:</h3>
+            <a href="{{ url_for('crear_registro', table_name=selected_table) }}" class="btn btn-success mb-3">Crear Registros</a>
+            <!-- Agrega la clase 'overflow-auto' y establece una altura específica (por ejemplo, '400px') -->
+            <div class="card mt-1 overflow-auto" style="height: 400px;">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-bordered">
+                            <thead class="table-dark sticky-header">
+                                <tr>
+                                    {% for column in columns %}
+                                        <th>{{ column }}</th>
+                                    {% endfor %}
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for record in records %}
+                                    <tr>
+                                        <td>{{ record[0] }}</td>
+                                        {% for value in record[1:] %}
+                                            <td>{{ value }}</td>
+                                        {% endfor %}
+                                        <td>
+                                            <a href="/editar/{{ selected_table }}/{{ record[0] }}" class="btn btn-primary">Editar</a>
+                                            <a href="/eliminar/{{ selected_table }}/{{ record[0] }}" class="btn btn-danger">Eliminar</a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        {% endif %}
+    {% endif %}
+</div>
+
+
+<script>
+    document.getElementById('select-all-checkbox').addEventListener('change', function () {
+        var checkboxes = document.getElementsByName('selected_columns');
+        for (var i = 0; i < checkboxes.length; i++) {
+            checkboxes[i].checked = this.checked;
+        }
+    });
+
+    // Manejar la visualización de la selección
+    var checkboxes = document.getElementsByName('selected_columns');
+    for (var i = 0; i < checkboxes.length; i++) {
+        checkboxes[i].addEventListener('change', function () {
+            updateSelection();
+        });
+    }
+
+    function updateSelection() {
+        var selectedValues = [];
+        for (var i = 0; i < checkboxes.length; i++) {
+            if (checkboxes[i].checked) {
+                selectedValues.push(checkboxes[i].value);
+            }
+        }
+        console.log('Seleccionados: ' + selectedValues.join(', '));
+    }
+
+</script>
+
+<script>
+    function validateForm() {
+        // Obtener las checkboxes seleccionadas
+        var checkboxes = document.getElementsByName('selected_columns');
+        var checkedCount = 0;
+
+        // Contar el número de checkboxes seleccionadas
+        for (var i = 0; i < checkboxes.length; i++) {
+            if (checkboxes[i].checked) {
+                checkedCount++;
+            }
+        }
+
+        // Mostrar mensaje de error si no se seleccionan al menos dos checkboxes
+        if (checkedCount < 2) {
+            alert('Por favor, selecciona al menos dos columnas.');
+            return false;
+        }
+
+        // Devolver true para enviar el formulario si la validación es exitosa
+        return true;
+    }
+</script>
+
+<script>
+    function validateRegressionForm() {
+        var xVariable = document.getElementById('x_variable').value;
+        var yVariable = document.getElementById('y_variable').value;
+
+        if (xVariable.trim() === '' || yVariable.trim() === '') {
+            alert('Por favor, selecciona ambas variables.');
+            return false;
+        }
+
+        return true;
+    }
+</script>
+
+
+
+
+{% endblock %}

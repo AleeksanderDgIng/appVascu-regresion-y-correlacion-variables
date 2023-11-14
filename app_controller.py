@@ -1,6 +1,6 @@
 # app_controller.py
 
-from flask import Flask, render_template, request, redirect, url_for  # Importar módulos de Flask
+from flask import Flask, render_template, request, redirect, url_for, flash, get_flashed_messages  # Importar módulos de Flask
 import mysql.connector  # Importar el conector MySQL
 import xlrd  # Importar para procesar archivos de Excel
 from sklearn.linear_model import LinearRegression  # Importa el modelo de regresión lineal
@@ -11,10 +11,13 @@ from controllers.regresion_lineal import RegresionLinealModel# Importa la clase
 from controllers.analizar_correlacion import analizar_correlacion  # Importar función para analizar correlación
 from models.db_connection import get_db_connection
 import pickle
+import os
+
 
 
 # Crear una instancia de la aplicación Flask
 app = Flask(__name__, template_folder='views')
+app.secret_key = os.urandom(24)
 app.debug = False  # Desactivar el modo de depuración de la aplicación
 
 # Inicializar la clase RegresionLinealModel
@@ -49,9 +52,22 @@ def index():
     # Renderiza la plantilla index.html
     return render_template('index.html')
 
+
+
+
+
+
+
+
+
+
+
+
+
 # Ruta para procesar la selección de una tabla en la base de datos y mostrar opciones de acción
 @app.route('/seleccionar-tabla/<action>', methods=['GET', 'POST'])
 def seleccionar_tabla(action):
+    print(f"Action: {action}")
     error_message = None
     selected_table = None
     records = []  # Almacenará los registros de la tabla seleccionada
@@ -70,32 +86,40 @@ def seleccionar_tabla(action):
     if request.method == 'POST':  # Si se envía un formulario mediante el método POST
         selected_table = request.form.get('table')  # Obtener el nombre de la tabla seleccionada desde el formulario
         if selected_table:  # Si se selecciona una tabla
-            if action == 'correlacion':
-                # Redirige a la vista de correlación con el nombre de la tabla como argumento
-                return redirect(url_for('seleccionar_variables_correlacion', table_name=selected_table))
-            elif action == 'regresion':
-                # Redirige a la vista de regresión con el nombre de la tabla como argumento
-                return redirect(url_for('seleccionar_variables_regresion', table_name=selected_table))
-        else:
-            error_message = "Selecciona una tabla antes de continuar."  # Mensaje de error si no se selecciona una tabla
+            # Obtener los registros y columnas de la tabla seleccionada
+            db = connect_to_db()  # Conectar a la base de datos nuevamente
+            if db is not None:
+                cursor = db.cursor()  # Crear un cursor para ejecutar consultas SQL
 
-    # Obtener los registros de la tabla seleccionada
-    if selected_table:  # Si se ha seleccionado una tabla
-        db = connect_to_db()  # Conectar a la base de datos nuevamente
-        if db is not None:
-            cursor = db.cursor()  # Crear un cursor para ejecutar consultas SQL
-            cursor.execute(f"SHOW COLUMNS FROM {selected_table}")  # Consulta SQL para obtener las columnas de la tabla
-            columns = [col[0] for col in cursor.fetchall()]  # Obtener la lista de nombres de columnas desde el cursor
-            cursor.execute(f"SELECT * FROM {selected_table}")  # Consulta SQL para obtener los registros de la tabla
-            records = cursor.fetchall()  # Obtener los registros desde el cursor
-            db.close()  # Cerrar la conexión a la base de datos
+                # Obtener las columnas de la tabla seleccionada
+                cursor.execute(f"SHOW COLUMNS FROM {selected_table}")
+                columns = [col[0] for col in cursor.fetchall()]
 
-    # Renderizar la plantilla 'seleccionar_tabla.html' con los datos obtenidos
-    return render_template('seleccionar_tabla.html', action=action, tables=tables, selected_table=selected_table, error_message=error_message, columns=columns, records=records)
+                # Obtener los registros de la tabla seleccionada
+                cursor.execute(f"SELECT * FROM {selected_table}")
+                records = cursor.fetchall()
+                db.close()  # Cerrar la conexión a la base de datos
 
+    # Renderizar la plantilla 'seleccion.html' con los datos obtenidos
+    return render_template('seleccion.html', action=action, tables=tables, selected_table=selected_table, error_message=error_message, columns=columns, records=records)
 
-#REGRESION LINEAL
-#ruta que permite al usuario seleccionar las variables para el análisis de regresión en una tabla de la base de datos.
+# Nueva ruta para la vista combinada
+@app.route('/vista-combinada/<table_name>', methods=['GET'])
+def vista_combinada(table_name):
+    # Obtener los registros y columnas de la tabla seleccionada
+    db = connect_to_db()
+    if db is not None:
+        cursor = db.cursor()
+        cursor.execute(f"SHOW COLUMNS FROM {table_name}")
+        columns = [col[0] for col in cursor.fetchall()]
+        cursor.execute(f"SELECT * FROM {table_name}")
+        records = cursor.fetchall()
+        db.close()
+
+    # Renderizar la vista combinada 'seleccion.html' con los datos obtenidos
+    return render_template('seleccion.html', table_name=table_name, columns=columns, records=records)
+
+# Ruta que permite al usuario seleccionar las variables para el análisis de regresión en una tabla de la base de datos.
 @app.route('/seleccionar-variables-regresion/<table_name>', methods=['GET', 'POST'])
 def seleccionar_variables_regresion(table_name):
     error_message = None
@@ -120,7 +144,43 @@ def seleccionar_variables_regresion(table_name):
         if len(selected_columns) != 2:  # Comprueba si se han seleccionado exactamente dos variables (una para X y otra para Y) para realizar un análisis de regresión.
             error_message = "Selecciona exactamente dos variables, una para X y otra para Y, para el análisis de regresión."
 
-    return render_template('seleccionar_variables_regresion.html', error_message=error_message or "", columns=columns, table_name=table_name, selected_columns=selected_columns, records=records)
+    return render_template('seleccion.html', error_message=error_message or "", columns=columns, table_name=table_name, selected_columns=selected_columns, records=records)
+
+# Ruta que permite al usuario seleccionar las variables para el análisis de correlación en una tabla de la base de datos.
+@app.route('/seleccionar-variables-correlacion/<table_name>', methods=['GET', 'POST'])
+def seleccionar_variables_correlacion(table_name):
+    error_message = None
+    selected_columns = []
+
+    # Obtén la lista de columnas de la tabla seleccionada
+    db = connect_to_db()  # Se llama a la función para conectar a la base de datos
+    if db is not None:  # Si la conexión a la base de datos es exitosa
+        cursor = db.cursor()  # Crear un cursor para ejecutar consultas SQL
+        cursor.execute(f"SHOW COLUMNS FROM {table_name}")  # Consulta SQL para obtener la lista de columnas de la tabla
+        columns = [col[0] for col in cursor.fetchall()]  # Obtener la lista de columnas desde el cursor
+        cursor.execute(f"SELECT * FROM {table_name}")  # Consulta SQL para obtener los registros de la tabla
+        records = cursor.fetchall()  # Obtener los registros desde el cursor
+        db.close()  # Cerrar la conexión a la base de datos
+    else:
+        columns = []  # Si no se puede conectar a la base de datos, establece la lista de columnas como vacía
+        records = []  # Establece la lista de registros como vacía
+
+    if request.method == 'POST':  # Si se envía un formulario mediante el método POST
+        selected_columns = request.form.getlist('variables')  # Obtiene la lista de variables seleccionadas desde el formulario
+
+        if len(selected_columns) < 2:  # Comprueba si se han seleccionado menos de dos variables para realizar un análisis de correlación
+            error_message = "Selecciona al menos dos variables para el análisis de correlación."
+
+    return render_template('seleccion.html', error_message=error_message or "", columns=columns, table_name=table_name, selected_columns=selected_columns, records=records)
+
+
+
+
+
+
+
+
+
 
 # Función para verificar si la tabla y las variables son válidas
 def verificar_variables(selected_table, x_variable, y_variable):
@@ -316,32 +376,6 @@ def mostrar_mapa_de_calor(table_name):
         return result  # Devuelve el resultado (puede ser un error o el mapa de calor)
 
 
-#ruta que permite al usuario seleccionar las variables para el análisis de correlación en una tabla de la base de datos.
-@app.route('/seleccionar-variables-correlacion/<table_name>', methods=['GET', 'POST'])
-def seleccionar_variables_correlacion(table_name):
-    error_message = None
-    selected_columns = []
-
-    # Obtén la lista de columnas de la tabla seleccionada
-    db = connect_to_db()  # Se llama a la función para conectar a la base de datos
-    if db is not None:  # Si la conexión a la base de datos es exitosa
-        cursor = db.cursor()  # Crear un cursor para ejecutar consultas SQL
-        cursor.execute(f"SHOW COLUMNS FROM {table_name}")  # Consulta SQL para obtener la lista de columnas de la tabla
-        columns = [col[0] for col in cursor.fetchall()]  # Obtener la lista de columnas desde el cursor
-        cursor.execute(f"SELECT * FROM {table_name}")  # Consulta SQL para obtener los registros de la tabla
-        records = cursor.fetchall()  # Obtener los registros desde el cursor
-        db.close()  # Cerrar la conexión a la base de datos
-    else:
-        columns = []  # Si no se puede conectar a la base de datos, establece la lista de columnas como vacía
-        records = []  # Establece la lista de registros como vacía
-
-    if request.method == 'POST':  # Si se envía un formulario mediante el método POST
-        selected_columns = request.form.getlist('variables')  # Obtiene la lista de variables seleccionadas desde el formulario
-
-        if len(selected_columns) < 2:  # Comprueba si se han seleccionado menos de dos variables para realizar un análisis de correlación
-            error_message = "Selecciona al menos dos variables para el análisis de correlación."
-
-    return render_template('seleccionar_variables_correlacion.html', error_message=error_message or "", columns=columns, table_name=table_name, selected_columns=selected_columns, records=records)
 
 
 # Iniciar la aplicación si este archivo se ejecuta directamente
