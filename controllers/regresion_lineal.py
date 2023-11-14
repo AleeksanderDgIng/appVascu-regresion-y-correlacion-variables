@@ -7,6 +7,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LinearRegression
 import mysql.connector
 from models.db_connection import get_db_connection
+import plotly.express as px
 
 class RegresionLinealModel:
     def __init__(self):
@@ -49,8 +50,6 @@ class RegresionLinealModel:
                 if result:
                     print("Datos obtenidos de la base de datos:", result)
                     data_regression = pd.DataFrame(result, columns=[x_variable, y_variable])
-                    
-                    
 
                     X = data_regression[x_variable].values.reshape(-1, 1)
                     y = data_regression[y_variable].values.reshape(-1, 1)
@@ -64,18 +63,17 @@ class RegresionLinealModel:
                     y_pred = self.model.predict(X_std)
                     y_pred = self.scaler.inverse_transform(y_pred)
 
-                    plt.scatter(X, y, label='Datos reales', color='blue')
-                    plt.plot(X, y_pred, label='Línea de regresión', color='red')
-                    plt.xlabel(x_variable)
-                    plt.ylabel(y_variable)
-                    plt.legend()
-                    plt.savefig('static/image_regresion/regresion_plot.png')
-                    plt.clf()
+                    # Utilizamos Plotly para el gráfico interactivo
+                    fig = px.scatter(data_regression, x=x_variable, y=y_variable, trendline="ols")
+                    fig.update_layout(
+                        title=f'Regresión Lineal entre {x_variable} y {y_variable}',
+                        xaxis_title=x_variable,
+                        yaxis_title=y_variable
+                    )
+                    fig.write_html('static/image_regresion/regresion_plot.html')
 
-                    print("Gráfico de regresión guardado correctamente en 'static/image_regresion/regresion_plot.png'")
-                    
                     registros = len(data_regression)
-                    
+
                     success_message = "Regresión lineal completada."
                     beta_0 = self.model.intercept_[0]
                     beta_1 = self.model.coef_[0][0]
@@ -98,7 +96,9 @@ class RegresionLinealModel:
 
         return (
             success_message, error_message, values_calculated,
-            beta_0, beta_1, r_squared, varianza_residual, correlation_coefficient, registros
+    beta_0, beta_1 if isinstance(beta_1, (float, int)) else None,
+    r_squared if isinstance(r_squared, (float, int)) else None,
+    varianza_residual, correlation_coefficient, registros
         )
 
     def calcular_r_squared(self, X, y, y_pred):

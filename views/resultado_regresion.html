@@ -1,163 +1,210 @@
 <!-- resultado_regresion.html -->
 
-{% extends "base.html" %}
+{% extends "index.html" %}
 {% block content %}
 
 <div class="row">
     <h2>Modelo Entrenado</h2>
 
     <!-- Sección izquierda: Gráfico de Regresión -->
-    <div class="col-md-6">
-        
-            <div class="card">
-                <img src="{{ url_for('static', filename='image_regresion/regresion_plot.png') }}" alt="Gráfico de Regresión"
-                    class="card-img-top">
-                <div class="card-body">
-                    <p class="card-text">
-                        El gráfico muestra la relación entre {{ x_variable }} y {{ y_variable }}.
-                        Este análisis de regresión lineal proporciona insights sobre cómo cambios en {{ x_variable }}
-                        están asociados con cambios en {{ y_variable }}.
-                    </p>
-                </div>
-            </div>
-        
+    <div class="col-md-6 ">
+        <div class="card shadow p-3 mb-4 bg-white rounded">
+            <!-- Gráfico de Regresión en un iframe -->
+            <iframe src="{{ url_for('static', filename='/image_regresion/regresion_plot.html') }}" width="100%"
+                height="650"></iframe>
 
-        {% if registros is defined %}
-        <div class="card border-info mt-3">
-            <div class="card-body">
-                <h5 class="card-title text-info">Número de registros analizados</h5>
-                <p class="card-text lead">{{ registros }}</p>
-            </div>
-        </div>
-    {% endif %}
-    </div>
-
-    <!-- Sección derecha: Gráfico de regresión -->
-    <div class="col-md-6">
-        {% if beta_0 is defined and beta_1 is defined %}
-        <div class="mt-4 card">
-            <div class="card-body">
-                <h4 class="card-title">Análisis contextual del modelo entrenado</h4>
+            <div class="card-body ">
+                <!-- Descripción del gráfico -->
                 <p class="card-text">
-                    El análisis de la regresión lineal proporciona una visión clara de la relación entre las
-                    variables.
-                    La variable independiente <span class="{{ 'text-success' if beta_1 >= 0 else 'text-danger' }}">{{
-                        x_variable }}</span> exhibe una influencia significativa en la variable dependiente
-                    <span class="{{ 'text-success' if beta_1 >= 0 else 'text-danger' }}">{{ y_variable }}</span>. El
-                    modelo indica una relación <span class="{{ 'text-success' if beta_1 >= 0 else 'text-danger' }}">{{
-                        "positiva" if beta_1 >= 0 else "negativa" }}</span> entre estas variables, sugiriendo que un
-                    aumento/disminución en
-                    <span class="{{ 'text-success' if beta_1 >= 0 else 'text-danger' }}">{{ x_variable }}</span> está
-                    asociado con un aumento/disminución en
-                    <span class="{{ 'text-success' if beta_1 >= 0 else 'text-danger' }}">{{ y_variable }}</span>.
-
-                    Este hallazgo se respalda con el coeficiente de pendiente (B<sub>1</sub>) calculado durante la regresión.
-                    Con un valor positivo de B<sub>1</sub>, podemos interpretar que, en promedio, se espera un aumento en
-                    <span class="{{ 'text-success' if beta_1 >= 0 else 'text-danger' }}">{{ y_variable }}</span> por
-                    cada unidad de cambio en
-                    <span class="{{ 'text-success' if beta_1 >= 0 else 'text-danger' }}">{{ x_variable }}</span>,
-                    mientras que un valor negativo indicaría una relación inversa.
-
-                    Además, se examinó el coeficiente de intercepto (B<sub>0</sub>), que representa el valor esperado de
-                    <span class="{{ 'text-success' if beta_1 >= 0 else 'text-danger' }}">{{ y_variable }}</span> cuando
-                    todas las
-                    <span class="{{ 'text-success' if beta_1 >= 0 else 'text-danger' }}">{{ x_variable }}</span> son
-                    cero. Un B<sub>0</sub> significativo añade una capa adicional de interpretación al modelo.
-
-                    Al interpretar el coeficiente de intercepto (B<sub>0</sub>), observamos que {% if beta_0 == 0 %}<span
-                        class="text-info">cuando todas las {{ x_variable }} son cero, se espera que {{ y_variable }} sea
-                        cero</span>{% elif beta_0 > 0 %}<span class="text-info">se espera un valor positivo para {{
-                        y_variable }} incluso cuando todas las {{ x_variable }} son cero</span>{% else %}<span
-                        class="text-info">se espera un valor negativo para {{ y_variable }} cuando todas las {{
-                        x_variable }} son cero</span>{% endif %}.
-
-                    En cuanto a la calidad del ajuste del modelo a los datos, el Coeficiente de Determinación (R²) es
-                    <span class="{{ 'text-info' if r_squared >= 0.6 else 'text-warning' }}">{{ r_squared |
-                        default('0.0') }}</span>. Este valor indica que aproximadamente {% if r_squared >= 0.8 %}<span
-                        class="text-success">el 80% de la variabilidad en {{ y_variable }} es explicada por el
-                        modelo</span>{% elif r_squared >= 0.6 %}<span class="text-warning">alrededor del 60% es
-                        explicada</span>{% else %}<span class="text-danger">menos del 60% es explicada</span>{% endif
-                    %}. Un R² más alto sugiere un mejor ajuste del modelo a los datos.
-
-                    Ahora, al observar el gráfico de regresión, notamos que la línea de regresión (en rojo) sigue la
-                    tendencia de los datos reales (en azul). Esta alineación respalda visualmente la relación
-                    identificada por el modelo.
-
-                    En conjunto, estos resultados ofrecen una comprensión detallada de la dinámica entre
-                    <span class="{{ 'text-success' if beta_1 >= 0 else 'text-danger' }}">{{ x_variable }}</span> y
-                    <span class="{{ 'text-success' if beta_1 >= 0 else 'text-danger' }}">{{ y_variable }}</span>. Estos
-                    insights sirven como una base sólida para tomar decisiones informadas basadas en las predicciones
-                    del modelo de regresión lineal.
+                    El gráfico muestra la relación entre {{ x_variable }} y {{ y_variable }}.
+                    Este análisis de regresión lineal proporciona insights sobre cómo cambios en {{ x_variable }}
+                    están asociados con cambios en {{ y_variable }}.
                 </p>
             </div>
         </div>
+
+        <!-- Verificar si el número de registros está definido -->
+        {% if registros is defined %}
+            <div class="card shadow p-3 mb-4 bg-white rounded">
+                <div class="card-body">
+                    <!-- Título y número de registros analizados -->
+                    <h5 class="card-title text-info">Número de registros analizados</h5>
+                    <p class="card-text lead">{{ registros }}</p>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="col-md-6">
+        {% if beta_0 is defined and beta_1 is defined %}
+            <div class=" card shadow p-3 mb-4 bg-white rounded">
+                <div class="card-body ">
+                    <h4 class="card-title">Análisis contextual del modelo entrenado</h4>
+                    <p class="card-text">
+                        El análisis de la regresión lineal proporciona una visión clara de la relación entre las
+                        variables.
+                        La variable independiente
+                        <span class="{{ 'text-success' if beta_1 is not none and beta_1 is not none and beta_1 >= 0 else 'text-danger' }}">
+                            {{ x_variable }}
+                        </span>
+                        exhibe una influencia significativa en la variable dependiente
+                        <span class="{{ 'text-success' if beta_1 is not none and beta_1 is not none and beta_1 >= 0 else 'text-danger' }}">
+                            {{ y_variable }}
+                        </span>.
+                        El modelo indica una relación
+                        <span class="{{ 'text-success' if beta_1 is not none and beta_1 is not none and beta_1 >= 0 else 'text-danger' }}">
+                            {{ "positiva" if beta_1 is not none and beta_1 is not none and beta_1 >= 0 else "negativa" }}
+                        </span>
+                        entre estas variables, sugiriendo que un aumento/disminución en
+                        <span class="{{ 'text-success' if beta_1 is not none and beta_1 is not none and beta_1 >= 0 else 'text-danger' }}">
+                            {{ x_variable }}
+                        </span>
+                        está asociado con un aumento/disminución en
+                        <span class="{{ 'text-success' if beta_1 is not none and beta_1 is not none and beta_1 >= 0 else 'text-danger' }}">
+                            {{ y_variable }}
+                        </span>.
+
+                        Este hallazgo se respalda con el coeficiente de pendiente (B<sub>1</sub>) calculado durante la
+                        regresión.
+                        Con un valor positivo de B<sub>1</sub>, podemos interpretar que, en promedio, se espera un
+                        aumento en
+                        <span class="{{ 'text-success' if beta_1 is not none and beta_1 is not none and beta_1 >= 0 else 'text-danger' }}">
+                            {{ y_variable }}
+                        </span>
+                        por cada unidad de cambio en
+                        <span class="{{ 'text-success' if beta_1 is not none and beta_1 is not none and beta_1 >= 0 else 'text-danger' }}">
+                            {{ x_variable }}
+                        </span>,
+                        mientras que un valor negativo indicaría una relación inversa.
+
+                        Además, se examinó el coeficiente de intercepto (B<sub>0</sub>), que representa el valor esperado de
+                        <span class="{{ 'text-success' if beta_1 is not none and beta_1 is not none and beta_1 >= 0 else 'text-danger' }}">
+                            {{ y_variable }}
+                        </span>
+                        cuando todas las
+                        <span class="{{ 'text-success' if beta_1 is not none and beta_1 is not none and beta_1 >= 0 else 'text-danger' }}">
+                            {{ x_variable }}
+                        </span>
+                        son cero. Un B<sub>0</sub> significativo añade una capa adicional de interpretación al modelo.
+
+                        Al interpretar el coeficiente de intercepto (B<sub>0</sub>), observamos que
+                        {% if beta_0 == 0 %}
+                            <span class="text-info">cuando todas las {{ x_variable }} son cero, se espera que {{ y_variable }}
+                                sea
+                                cero</span>
+                        {% elif beta_0 is not none and beta_0 > 0 %}
+                            <span class="text-info">se espera un valor positivo para {{ y_variable }} incluso cuando todas las
+                                {{ x_variable }} son cero</span>
+                        {% else %}
+                            <span class="text-info">se espera un valor negativo para {{ y_variable }} cuando todas las
+                                {{ x_variable }} son cero</span>
+                        {% endif %}.
+
+                        En cuanto a la calidad del ajuste del modelo a los datos, el Coeficiente de Determinación (R²) es
+                        <span class="{{ 'text-info' if r_squared is not none and r_squared >= 0.6 else 'text-warning' }}">
+                            {{ r_squared | default('0.0') }}
+                        </span>.
+                        Este valor indica que aproximadamente
+                        {% if r_squared is not none and r_squared >= 0.8 %}
+                            <span class="text-success">el 80% de la variabilidad en {{ y_variable }} es explicada por el
+                                modelo</span>
+                        {% elif r_squared is not none and r_squared >= 0.6 %}
+                            <span class="text-warning">alrededor del 60% es explicada</span>
+                        {% else %}
+                            <span class="text-danger">menos del 60% es explicada</span>
+                        {% endif %}.
+                        Un R² más alto sugiere un mejor ajuste del modelo a los datos.
+
+                        Ahora, al observar el gráfico de regresión, notamos que la línea de regresión (en rojo) sigue la
+                        tendencia
+                        de los datos reales (en azul). Esta alineación respalda visualmente la relación identificada por el
+                        modelo.
+
+                        En conjunto, estos resultados ofrecen una comprensión detallada de la dinámica entre
+                        <span
+                            class="{{ 'text-success' if beta_1 is not none and beta_1 is not none and beta_1 >= 0 else 'text-danger' }}">
+                            {{ x_variable }}
+                        </span>
+                        y
+                        <span
+                            class="{{ 'text-success' if beta_1 is not none and beta_1 is not none and beta_1 >= 0 else 'text-danger' }}">
+                            {{ y_variable }}
+                        </span>.
+                        Estos insights sirven como una base sólida para tomar decisiones informadas basadas en las
+                        predicciones del
+                        modelo de regresión lineal.
+                    </p>
+                </div>
+            </div>
         {% endif %}
 
-
-
         <!-- PREDICCION -->
-        <div>
-            <h1>Predicción</h1>
-        
-            <!-- Formulario para realizar predicción -->
-            <form id="predictionForm" method="POST" action="/realizar-prediccion">
-                <label for="x_variable" class="form-label">Ingresa el valor de la variable Explicativa
-                    X (Independiente):</label>
-                <div class="input-group mb-3">
-                    <input type="number" step="any" name="x_variable" id="x_variable" class="form-control" required
-                        value="{% if x_variable_value %}{{ x_variable_value }}{% endif %}">
-                    <button type="button" class="btn btn-primary" onclick="realizarPrediccion()">Realizar
-                        Predicción</button>
+        <div class="card shadow p-3 mb-5 bg-white rounded">
+            <div class="card-body">
+                <h1 class="mb-4">Predicción</h1>
+
+                <!-- Formulario para realizar predicción -->
+                <form id="predictionForm" method="POST" action="/realizar-prediccion">
+                    <div class="mb-3">
+                        <label for="x_variable" class="form-label">Ingresa el valor de la variable Explicativa
+                            X (Independiente):</label>
+                        <div class="input-group">
+                            <input type="number" step="any" name="x_variable" id="x_variable" class="form-control" required
+                                value="{% if x_variable_value %}{{ x_variable_value }}{% endif %}">
+                            <button type="button" class="btn btn-primary" onclick="realizarPrediccion()">Realizar
+                                Predicción</button>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Resultados de la predicción -->
+                <div class="mb-4">
+                    <h4>Resultado de la Predicción:</h4>
+
+                    {% if result %}
+                    <div class="alert alert-info">
+                        <p class="lead mb-0">Se ha realizado una predicción para <strong>{{ result.x_variable }}</strong> en
+                            función de <strong>{{ result.y_variable }}</strong>.</p>
+                    </div>
+
+                    {% if result.error_message %}
+                    <div class="alert alert-danger mt-3">
+                        <p>¡Ups! Parece que hubo un problema:</p>
+                        <p>{{ result.error_message }}</p>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-success mt-3">
+                        <p>La predicción fue exitosa. Según el modelo, para el valor de <strong>{{ result.x_variable }}</strong>
+                            proporcionado ({{ request.form['x_variable'] }}), se estima que el valor de <strong>{{
+                                result.y_variable }}</strong>
+                            será aproximadamente:</p>
+                        <p class="lead">{{ result.prediction }}</p>
+                    </div>
+                    {% endif %}
+                    {% endif %}
                 </div>
-            </form>
-        
-            <!-- Resultados de la predicción -->
-            <h4 class="mb-4">Resultado de la Predicción:</h4>
-        
-            {% if result %}
-            <div class="alert alert-info">
-                <p class="lead mb-0">Se ha realizado una predicción para <strong>{{ result.x_variable }}</strong> en
-                    función de <strong>{{ result.y_variable }}</strong>.</p>
+
             </div>
-        
-            {% if result.error_message %}
-            <div class="alert alert-danger mt-3">
-                <p>¡Ups! Parece que hubo un problema:</p>
-                <p>{{ result.error_message }}</p>
-            </div>
-            {% else %}
-            <div class="alert alert-success mt-3">
-                <p>La predicción fue exitosa. Según el modelo, para el valor de <strong>{{ result.x_variable }}</strong>
-                    proporcionado ({{ request.form['x_variable'] }}), se estima que el valor de <strong>{{ result.y_variable }}</strong>
-                    será aproximadamente:</p>
-                <p class="lead">{{ result.prediction }}</p>
-            </div>
-        
-            
-            {% endif %}
-            {% endif %}
         </div>
         <!-- FIN PREDICCION -->
-
-
     </div>
 
 
-    <div class="container mt-4">
+    <div class="container">
         <div class="row">
             <!-- Coeficiente de Determinación (R²) -->
             {% if r_squared is defined %}
-            <div class="col-md-3">
-                <div class="card h-100 mt-3">
+            <div class="col-md-3 ">
+                <div class="card h-100 shadow p-3 mb-5 bg-white rounded">
                     <div class="card-body">
                         <h5 class="card-title">Coeficiente de Determinación (R²)</h5>
                         <p class="card-text small">Puede interpretarse como la calidad del ajuste del modelo a los datos.</p>
                         <p class="card-text lead">{{ r_squared }}</p>
-                        {% if r_squared >= 0.8 %}
+                        {% if r_squared is not none and r_squared >= 0.8 %}
                             <div class="alert alert-success" role="alert">
                                 Alto coeficiente de determinación: el modelo explica bien las variaciones en la variable dependiente.
                             </div>
-                        {% elif r_squared >= 0.6 %}
+                        {% elif r_squared is not none and r_squared >= 0.6 %}
                             <div class="alert alert-warning" role="alert">
                                 Coeficiente de determinación moderado: el modelo tiene cierta capacidad predictiva.
                             </div>
@@ -174,7 +221,7 @@
             <!-- Coeficiente de Intercepto (Beta0) -->
             {% if beta_0 is defined %}
             <div class="col-md-3">
-                <div class="card h-100 mt-3">
+                <div class="card h-100 shadow p-3 mb-5 bg-white rounded">
                     <div class="card-body">
                         <h5 class="card-title">Coeficiente de Intersección (B<sub>0</sub>)</h5>
                         <p class="card-text lead">{{ beta_0 }}</p>
@@ -182,7 +229,7 @@
                             <div class="alert alert-info" role="alert">
                                 Cuando todas las {{ x_variable }} son cero, se espera que {{ y_variable }} sea cero.
                             </div>
-                        {% elif beta_0 > 0 %}
+                        {% elif beta_0 is not none and beta_0 > 0 %}
                             <div class="alert alert-info" role="alert">
                                 Se espera un valor positivo para {{ y_variable }} incluso cuando todas las {{ x_variable }} son cero.
                             </div>
@@ -204,15 +251,15 @@
             <!-- Coeficiente de Pendiente (Beta1) -->
             {% if beta_1 is defined %}
             <div class="col-md-3">
-                <div class="card h-100 mt-3">
+                <div class="card h-100 shadow p-3 mb-5 bg-white rounded">
                     <div class="card-body">
                         <h5 class="card-title">Coeficiente de Pendiente m (B<sub>1</sub>)</h5>
                         <p class="card-text lead">{{ beta_1 }}</p>
-                        {% if beta_1 > 0 %}
+                        {% if beta_1 is not none and beta_1 > 0 %}
                             <div class="alert alert-success" role="alert">
                                 Coeficiente de pendiente positivo: relación positiva entre {{ x_variable }} y {{ y_variable }}.
                             </div>
-                        {% elif beta_1 < 0 %}
+                        {% elif beta_1 is not none and beta_1 < 0 %}
                             <div class="alert alert-danger" role="alert">
                                 Coeficiente de pendiente negativo: relación negativa entre {{ x_variable }} y {{ y_variable }}.
                             </div>
@@ -234,16 +281,16 @@
             <!-- Varianza Residual -->
             {% if varianza_residual is defined %}
             <div class="col-md-3">
-                <div class="card h-100 mt-3">
+                <div class="card h-100 shadow p-3 mb-5 bg-white rounded">
                     <div class="card-body">
                         <h5 class="card-title">Varianza Residual</h5>
                         <p class="card-text small">Mide la dispersión de los residuos no explicados por el modelo.</p>
                         <p class="card-text lead">{{ varianza_residual }}</p>
-                        {% if varianza_residual <= 0.2 %}
+                        {% if varianza_residual is not none and varianza_residual <= 0.2 %}
                             <div class="alert alert-success" role="alert">
                                 Baja varianza residual: el modelo muestra una buena capacidad para explicar la variabilidad en los datos.
                             </div>
-                        {% elif 0.2 < varianza_residual <= 0.5 %}
+                        {% elif varianza_residual is not none and 0.2 < varianza_residual <= 0.5 %}
                             <div class="alert alert-warning" role="alert">
                                 Varianza residual moderada: el modelo tiene cierta capacidad de explicación, aunque podría beneficiarse de mejoras.
                             </div>
@@ -258,12 +305,7 @@
             {% endif %}
         </div>
     </div>
-    
 </div>
-
-
-
-
 
 
 <script>

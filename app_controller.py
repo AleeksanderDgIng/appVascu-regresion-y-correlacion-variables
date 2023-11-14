@@ -206,14 +206,6 @@ def regresion_lineal(table_name):
 
 
 
-
-# Ruta para mostrar los resultados de la regresión
-@app.route('/resultado-regresion', methods=['GET'])
-def resultado_regresion():
-    return render_template('regresion.html', success_message=success_message, error_message=None)
-
-
-
 # Ruta para realizar la predicción
 @app.route('/realizar-prediccion', methods=['POST'])
 def realizar_prediccion():

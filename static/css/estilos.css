@@ -60,6 +60,12 @@ a {
     overflow: hidden
 }
 
+.nav_logo-img {
+    max-width: 20%; /* Hace que la imagen sea como máximo del 100% del ancho del contenedor */
+    height: auto;    /* Permite que la altura se ajuste automáticamente según el ancho */
+    display: block;  /* Elimina espacio adicional debajo de la imagen */
+}
+
 .header_img img {
     width: 40px
 }
