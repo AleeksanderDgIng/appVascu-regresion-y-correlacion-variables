@@ -1,42 +1,58 @@
 {% extends "index.html" %}
+
 {% block content %}
     <div class="container mt-4">
-        <h2>Mapa de Calor de Correlación para {{ table_name }}</h2>
-        <p>Variables seleccionadas: {{ selected_columns }}</p>
-        <img src="{{ url_for('static', filename='image_correlacion/mapa_de_calor.png') }}" alt="Mapa de Calor">
-    </div>
+        <div class="row">
+            <h2>Mapa de calor de correlación de variables para {{ table_name }}</h2>
+                <p>Variables seleccionadas: {{ selected_columns }}</p>
+            <div class="col-md-6">
+                <iframe src="{{ url_for('static', filename='/image_correlacion/mapa_de_calor.html') }}" width="100%" height="650"></iframe>
+            </div>
 
-    <!-- Contenedor para mostrar el mensaje de correlación -->
-<div class="container mt-4">
-    <div class="alert alert-success" role="alert">
-        {{ message }}
+            <!-- Contenedor para mostrar el mensaje de correlación en una card -->
+            <div class="col-md-6">
+                <div class="card text-center shadow p-3 mb-3 bg-white rounded">
+                    <div class="card-body">
+                        <h5 class="card-title">Resultado de la Correlación</h5>
+                        <div class="card-text" role="alert">
+                            {{ message | safe }}
+                        </div>
+                    </div>
+                </div>
+
+
+                <div class="alert alert-info" role="alert">
+                    En este mapa de calor, se visualizan los coeficientes de correlación entre las variables seleccionadas.
+                    El coeficiente de correlación mide la relación lineal entre dos variables y puede variar en el rango de -1 a 1.
+                </div>
+
+                <div class="alert alert-success" role="alert">
+                    Un coeficiente de correlación cercano a 1 indica una correlación positiva fuerte, lo que significa que
+                    las variables tienden a aumentar juntas. Cuanto más alto sea el valor, más positivamente correlacionadas están.
+                </div>
+
+                <div class="alert alert-danger" role="alert">
+                    Por otro lado, un coeficiente de correlación cercano a -1 indica una correlación negativa fuerte, lo que
+                    significa que las variables tienden a disminuir juntas. Cuanto más bajo sea el valor, más negativamente correlacionadas están.
+                </div>
+
+                <div class="alert alert-info" role="alert">
+                    Un coeficiente de correlación cercano a 0 sugiere una correlación débil o nula, lo que significa que las
+                    variables no están relacionadas linealmente.
+                </div>
+            </div>
+        </div>
     </div>
-</div>
 
     <div class="container mt-4">
-        <h1>Mapa de Calor de Correlación</h1>
-    
-        <div class="alert alert-info" role="alert">
-            En este mapa de calor, se visualizan los coeficientes de correlación entre las variables seleccionadas.
-            El coeficiente de correlación mide la relación lineal entre dos variables y puede variar en el rango de -1 a 1.
-        </div>
+        <div class="row">
+            <div class="col-md-6">
+                
+            </div>
 
-        <div class="alert alert-success" role="alert">
-            Un coeficiente de correlación cercano a 1 indica una correlación positiva fuerte, lo que significa que
-            las variables tienden a aumentar juntas. Cuanto más alto sea el valor, más positivamente correlacionadas están.
-        </div>
-
-        <div class="alert alert-danger" role="alert">
-            Por otro lado, un coeficiente de correlación cercano a -1 indica una correlación negativa fuerte, lo que
-            significa que las variables tienden a disminuir juntas. Cuanto más bajo sea el valor, más negativamente correlacionadas están.
-        </div>
-
-        <div class="alert alert-info" role="alert">
-            Un coeficiente de correlación cercano a 0 sugiere una correlación débil o nula, lo que significa que las
-            variables no están relacionadas linealmente.
+            <div class="col-md-6">
+                
+            </div>
         </div>
     </div>
-
 {% endblock %}
-
-
