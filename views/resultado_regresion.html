@@ -13,6 +13,7 @@
             <iframe src="{{ url_for('static', filename='/image_regresion/regresion_plot.html') }}" width="100%"
                 height="650"></iframe>
 
+            {% if beta_0 is defined and beta_1 is defined %}
             <div class="card-body ">
                 <!-- Descripción del gráfico -->
                 <p class="card-text">
@@ -21,6 +22,7 @@
                     están asociados con cambios en {{ y_variable }}.
                 </p>
             </div>
+            {% endif %}
         </div>
 
         <!-- Verificar si el número de registros está definido -->
