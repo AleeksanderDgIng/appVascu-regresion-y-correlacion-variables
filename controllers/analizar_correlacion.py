@@ -73,8 +73,8 @@ def analizar_correlacion(selected_table, selected_columns):
                 )
 
                 # Guardar el mapa de calor en formato HTML
-                fig.write_html("static/image_correlacion/mapa_de_calor.html")
-                print("Mapa de calor guardado correctamente en 'static/image_correlacion/mapa_de_calor.html'")
+                fig.write_html("static/image_correlacion/resultado_correlacion.html")
+                print("Mapa de calor guardado correctamente en 'static/image_correlacion/resultado_correlacion.html'")
 
                 # Crear un mensaje para mostrar las dos variables con la correlación más alta
                 message = f"Las dos variables con la correlación más alta son: <strong style='color: blue;'>{variable1}</strong> y <strong style='color: green;'>{variable2}</strong>. El coeficiente de correlación es <strong>{highest_corr}</strong>."
@@ -82,7 +82,7 @@ def analizar_correlacion(selected_table, selected_columns):
                 # Generar el mapa de calor y el mensaje como diccionario
                 result = {
                     "message": message,
-                    "heatmap_path": "static/image_correlacion/mapa_de_calor.html"  # Ruta de la imagen del mapa de calor
+                    "heatmap_path": "static/image_correlacion/resultado_correlacion.html"  # Ruta de la imagen del mapa de calor
                 }
 
                 # Devolver el resultado como un diccionario

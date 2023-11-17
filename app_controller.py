@@ -255,7 +255,7 @@ def seleccionar_variables_correlacion(table_name):
 
 # Ruta para mostrar el mapa de calor de correlación
 @app.route('/mostrar-mapa-de-calor/<table_name>', methods=['POST'])
-def mostrar_mapa_de_calor(table_name):
+def mostrar_resultado_correlacion(table_name):
     selected_columns = request.form.getlist('selected_columns')
 
     if len(selected_columns) < 2:
@@ -268,7 +268,7 @@ def mostrar_mapa_de_calor(table_name):
         # Si el resultado contiene un mensaje, mostrar el mapa de calor
         message = result["message"]
         heatmap_path = result["heatmap_path"]
-        return render_template('mapa_de_calor.html', table_name=table_name, selected_columns=selected_columns,
+        return render_template('resultado_correlacion.html', table_name=table_name, selected_columns=selected_columns,
                                message=message, heatmap_path=heatmap_path)
     else:
         return result  # Devuelve el resultado (puede ser un error o el mapa de calor)

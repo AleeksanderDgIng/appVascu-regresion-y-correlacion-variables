@@ -31,7 +31,7 @@
                         <div class="card-body">
                             <h3 class="mb-4">Variables evaluar correlación en la tabla: {{ selected_table }}</h3>
 
-                            <form method="POST" action="{{ url_for('mostrar_mapa_de_calor', table_name=selected_table) }}" onsubmit="return validateForm()">
+                            <form method="POST" action="{{ url_for('mostrar_resultado_correlacion', table_name=selected_table) }}" onsubmit="return validateForm()">
                                 <div class="row">
                                     <div class="col-md-12 mb-3">
                                         <div class="form-check">
