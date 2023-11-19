@@ -113,7 +113,8 @@ def obtener_nombres_columnas(selected_table):
 # Ruta principal ("/") para mostrar la página index.html
 @app.route('/', methods=['GET'])
 def index():
-    return render_template('index.html')
+    tables = get_table_list()
+    return render_template('seleccion.html', action='seleccion', tables=tables, selected_table=None)
 
 
 # Ruta para procesar la selección de una tabla en la base de datos y mostrar opciones de acción

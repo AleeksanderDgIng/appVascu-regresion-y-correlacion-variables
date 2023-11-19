@@ -1,3 +1,5 @@
+<!-- views/index.html -->
+
 <!DOCTYPE html>
 <html>
 
@@ -12,7 +14,7 @@
 <body id="body-pd" class="bg-light">
     
     <header class="header d-flex align-items-center justify-content-between" id="header">
-        <h4 class="mb-0 text-light">Prototipo de análisis de datos</h4>
+        <h4 class="mb-0 text-light">Prototipo de análisis de datos Inversiones Vascu S.A.S</h4>
     </header>
 
 
@@ -25,20 +27,16 @@
                     <img src="{{ url_for('static', filename='image/logoVascu.png') }}" alt="Logo" class="nav_logo-img">
                 </a>
                 <div class="nav_list">
-                    <a href="/" class="nav_link" data-target="dashboard">
-                        <i class='bx bx-grid-alt nav_icon'></i>
-                        <span class="nav_name">Dashboard</span>
-                    </a>
-                    <a href="#" class="nav_link">
-                        <i class='bx bxs-data nav_icon'></i>
-                        <span class="nav_name">Gestión de datos</span>
-                    </a>
-                    
                     <a href="{{ url_for('seleccionar_tabla', action='seleccion') }}" class="nav_link" data-target="seleccion">
                         <i class='bx bx-bar-chart-alt-2 nav_icon'></i>
                         <span class="nav_name">Predictivo</span>
                     </a>
                     
+                    <a href="" class="nav_link">
+                        <i class='bx bxs-data nav_icon'></i>
+                        <span class="nav_name">Gestión de datos</span>
+                    </a>
+
                 </div>
             </div>
             <a href="#" class="nav_link">

@@ -16,14 +16,14 @@ def analizar_correlacion(selected_table, selected_columns):
         # Conectar a la base de datos
         print("Conexión exitosa a la base de datos MySQL.")
         
-        db = get_db_connection()  # Obtén una conexión a la base de datos desde la función
+        db = get_db_connection()  # conexión a la base de datos desde la función
 
         if db.is_connected():
             cursor = db.cursor()
 
             # Obtener los datos de las columnas seleccionadas
             query = f"SELECT {', '.join(selected_columns)} FROM {selected_table}"
-            print("Query SQL:", query)  # Agrega esta línea para verificar la consulta
+            print("Query SQL:", query)  
             cursor.execute(query)  # Ejecutar la consulta SQL
             result = cursor.fetchall()  # Obtener los resultados de la consulta
             
@@ -76,7 +76,7 @@ def analizar_correlacion(selected_table, selected_columns):
                 fig.write_html("static/image_correlacion/resultado_correlacion.html")
                 print("Mapa de calor guardado correctamente en 'static/image_correlacion/resultado_correlacion.html'")
 
-                # Crear un mensaje para mostrar las dos variables con la correlación más alta
+                # mensaje para mostrar las dos variables con la correlación más alta
                 message = f"Las dos variables con la correlación más alta son: <strong style='color: blue;'>{variable1}</strong> y <strong style='color: green;'>{variable2}</strong>. El coeficiente de correlación es <strong>{highest_corr}</strong>."
 
                 # Generar el mapa de calor y el mensaje como diccionario

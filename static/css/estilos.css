@@ -3,8 +3,8 @@
 :root {
     --header-height: 3rem;
     --nav-width: 220px;
-    --first-color: #4723D9;
-    --first-color-light: #AFA5D9;
+    --first-color: #161616;
+    --first-color-light: #6e6e6e;
     --white-color: #F7F6FB;
     --body-font: 'Nunito', sans-serif;
     --normal-font-size: 1rem;
@@ -40,7 +40,7 @@ a {
     align-items: center;
     justify-content: space-between;
     padding: 0 1rem;
-    background-color: #4723D9;
+    background-color: #161616;
     z-index: var(--z-fixed);
     transition: .5s
 }

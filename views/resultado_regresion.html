@@ -5,8 +5,13 @@
 
 <div class="container-fluid">
     <div class="row">
-        <h1 class="text-primary">Modelo Entrenado para {{ x_variable }} y {{ y_variable }}</h1>
-
+       
+        <h1 class="text-primary">
+            Modelo Entrenado para
+            
+            {{ x_variable }} {% if result %}{{ result.x_variable }}{% endif %} y {{ y_variable }} {% if result %}{{ result.y_variable }}{% endif %}
+            
+        </h1>
         <!-- Sección izquierda: Gráfico de Regresión -->
         <div class="col-md-6 ">
             <div class="card  p-3 mb-4 bg-white rounded">
