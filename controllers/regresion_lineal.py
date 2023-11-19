@@ -1,3 +1,5 @@
+# controllers/regresion_lineal.py
+
 import pandas as pd
 import numpy as np
 import matplotlib
@@ -22,7 +24,7 @@ class RegresionLinealModel:
         beta_0 = None
         beta_1 = None
         r_squared = None
-        varianza_residual = None
+
         correlation_coefficient = None
         registros = None
         values_calculated = False
@@ -56,7 +58,7 @@ class RegresionLinealModel:
 
                     self.scaler = StandardScaler()
                     X_std = self.scaler.fit_transform(X)
-                    y_std = self.scaler.fit_transform(y)
+                    y_std = self.scaler.transform(y) # Utilizar transform durante la regresión lineal
 
                     self.model.fit(X_std, y_std)
 
@@ -76,19 +78,24 @@ class RegresionLinealModel:
 
                     success_message = "Regresión lineal completada."
                     beta_0 = self.model.intercept_[0]
-                    beta_1 = self.model.coef_[0][0]
+                    beta_1 = self.model.coef_[0][0] # Coeficiente de la variable independiente
                     r_squared = self.calcular_r_squared(X, y, y_pred)
-                    varianza_residual = self.calcular_varianza_residual(y, y_pred)
                     correlation_coefficient = self.calcular_coeficiente_correlacion(X, y)
                     values_calculated = True
+
+
+                    # Después de la asignación
+                    print(f"Después de la asignación - beta_0: {beta_0}, beta_1: {beta_1}, r_squared: {r_squared}")
+
+
                 else:
                     error_message = f"No se encontraron datos en la tabla {selected_table}."
                     registros = 0  # Establecer a cero si no hay datos
             else:
                 error_message = "La conexión a la base de datos no está activa"
 
-        except ValueError:
-            error_message = "Ingresa un valor válido para X."
+        except ValueError as ve:
+            error_message = f"Error al ajustar el modelo de regresión: {ve}"
         except mysql.connector.Error as err:
             error_message = f"Error al conectar a la base de datos: {err}"
         except Exception as e:
@@ -96,41 +103,31 @@ class RegresionLinealModel:
 
         return (
             success_message, error_message, values_calculated,
-    beta_0, beta_1 if isinstance(beta_1, (float, int)) else None,
-    r_squared if isinstance(r_squared, (float, int)) else None,
-    varianza_residual, correlation_coefficient, registros
+            beta_0 if isinstance(beta_0, (float, int)) else None,
+            beta_1 if isinstance(beta_1, (float, int)) else None,
+            r_squared if isinstance(r_squared, (float, int)) else None,
+            
+            correlation_coefficient,
+            registros
         )
 
-    def calcular_r_squared(self, X, y, y_pred):
-        ssr = np.sum((y - y_pred) ** 2)
-        sst = np.sum((y - np.mean(y)) ** 2)
-        r_squared = 1 - (ssr / sst)
-        return r_squared
-
-    def calcular_varianza_residual(self, y, y_pred):
-        residuals = y - y_pred
-        varianza_residual = np.var(residuals)
-        return varianza_residual
-
-    def calcular_coeficiente_correlacion(self, X, y):
-        correlation_matrix = np.corrcoef(X[:, 0], y[:, 0])
-        correlation_coefficient = correlation_matrix[0, 1]
-        return correlation_coefficient
 
     def realizar_prediccion(self, x_variable):
         if self.scaler is None or self.model is None or self.x_variable_name is None or self.y_variable_name is None:
             raise ValueError("Debes realizar la regresión lineal primero para configurar el escalador, el modelo y los nombres de las variables.")
 
         try:
-            x_variable_std = self.scaler.transform([[x_variable]])
+            x_variable_std = self.scaler.transform([[x_variable]]) # Utilizar transform durante la predicción
 
             y_pred = self.model.predict(x_variable_std)
             y_pred = self.scaler.inverse_transform(y_pred)
+
 
             return {
                 'x_variable': self.x_variable_name,
                 'y_variable': self.y_variable_name,
                 'prediction': y_pred[0, 0],
+
                 'error_message': None
             }
         except Exception as e:
@@ -140,3 +137,17 @@ class RegresionLinealModel:
                 'prediction': None,
                 'error_message': f"Error al realizar la predicción: {e}"
             }
+
+
+
+    def calcular_r_squared(self, X, y, y_pred):
+        ssr = np.sum((y - y_pred) ** 2)
+        sst = np.sum((y - np.mean(y)) ** 2)
+        r_squared = 1 - (ssr / sst)
+        return r_squared
+
+
+    def calcular_coeficiente_correlacion(self, X, y):
+        correlation_matrix = np.corrcoef(X[:, 0], y[:, 0])
+        correlation_coefficient = correlation_matrix[0, 1]
+        return correlation_coefficient

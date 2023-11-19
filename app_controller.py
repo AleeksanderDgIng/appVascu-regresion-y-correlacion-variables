@@ -167,7 +167,7 @@ def regresion_lineal(table_name):
     beta_0 = None
     beta_1 = None
     r_squared = None
-    varianza_residual = None
+    
     correlation_coefficient = None
     x_variable = None
     y_variable = None
@@ -184,7 +184,7 @@ def regresion_lineal(table_name):
                 # Realizar la regresión lineal
                 (
                     success_message, error_message, prediction, beta_0, beta_1,
-                    r_squared, varianza_residual, correlation_coefficient, registros
+                    r_squared, correlation_coefficient, registros
                 ) = regresion_model.realizar_regresion_lineal(table_name, x_variable, y_variable)
         except ValueError:
             error_message = "Ingresa un valor válido para X."
@@ -200,7 +200,7 @@ def regresion_lineal(table_name):
         'beta_0': beta_0,
         'beta_1': beta_1,
         'r_squared': r_squared,
-        'varianza_residual': varianza_residual,
+        
         'correlation_coefficient': correlation_coefficient,
         'registros': registros
     }
