@@ -1,6 +1,5 @@
 # models/db_connection.py
 
-
 import mysql.connector
 
 # Conexion a la base de datos

@@ -5,12 +5,13 @@
 
 <div class="container-fluid">
     <div class="row">
-       
+
         <h1 class="text-primary">
             Modelo Entrenado para
-            
-            {{ x_variable }} {% if result %}{{ result.x_variable }}{% endif %} y {{ y_variable }} {% if result %}{{ result.y_variable }}{% endif %}
-            
+
+            {{ x_variable }} {% if result %}{{ result.x_variable }}{% endif %} y {{ y_variable }} {% if result %}{{
+            result.y_variable }}{% endif %}
+
         </h1>
         <!-- Sección izquierda: Gráfico de Regresión -->
         <div class="col-md-6 ">
@@ -184,16 +185,7 @@
             </div>
             <!-- FIN PREDICCION -->
 
-            <!-- Verificar si el número de registros está definido -->
-            {% if registros is defined %}
-            <div class="card  p-3 mb-4 bg-white rounded">
-                <div class="card-body">
-                    <!-- Título y número de registros analizados -->
-                    <h5 class="card-title text-primary">Número de registros analizados</h5>
-                    <p class="card-text lead fs-2">{{ registros }}</p>
-                </div>
-            </div>
-            {% endif %}
+
 
             <!-- CARDS RESULTADOS -->
             <div class="row mb-4">
@@ -297,8 +289,7 @@
 
                     <div class="card-body">
                         <h5 class="card-title text-primary">Coef. de Determinación (R²)</h5>
-                        <p class="card-text lead fs-2">{{ r_squared }} <br> aprox. el {{ '%.2f'|format(r_squared * 100)
-                            }}% </p>
+                        <p class="card-text lead fs-2">{{ r_squared }} <br> aprox. el {{ '%.2f'|format(r_squared * 100) }}% </p>
                         {% if r_squared is not none %}
                         {% if r_squared >= 0.8 %}
                         <div class="alert alert-success" role="alert">
@@ -377,6 +368,10 @@
 </div>
 </div>
 </div>
+
+
+
+
 
 
 <script>

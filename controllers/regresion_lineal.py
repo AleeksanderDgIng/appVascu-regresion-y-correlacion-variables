@@ -50,7 +50,7 @@ class RegresionLinealModel:
                 db.close()
 
                 if result:
-                    print("Datos obtenidos de la base de datos:", result)
+                    #print("Datos obtenidos de la base de datos:", result)
                     data_regression = pd.DataFrame(result, columns=[x_variable, y_variable])
 
                     X = data_regression[x_variable].values.reshape(-1, 1)
