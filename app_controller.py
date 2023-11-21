@@ -7,10 +7,15 @@ import os
 from models.db_connection import get_db_connection
 from controllers.regresion_lineal import RegresionLinealModel
 from controllers.analizar_correlacion import analizar_correlacion
+from flask_session import Session
 
 # Crear una instancia de la aplicación Flask
 app = Flask(__name__, template_folder='views')
 app.secret_key = os.urandom(24)
+
+app.config['SESSION_TYPE'] = 'filesystem'
+Session(app)
+
 app.debug = False
 
 # Inicializar la clase RegresionLinealModel
@@ -299,7 +304,8 @@ def realizar_prediccion():
             # Realizar la predicción utilizando el modelo de regresión lineal
             result = regresion_model.realizar_prediccion(x_variable)
 
-        except ValueError:
+        except ValueError as ve:
+            print(f"Error al convertir a float: {ve}")
             result = {
                 'x_variable': None,
                 'y_variable': None,
@@ -309,6 +315,7 @@ def realizar_prediccion():
 
     # Renderizar la plantilla 'resultado_regresion.html' con los resultados de la predicción
     return render_template('resultado_regresion.html', result=result)
+
 
 
 # Iniciar la aplicación si este archivo se ejecuta directamente

@@ -129,61 +129,60 @@
         </div>
         <div class="col-md-6">
 
-            <!-- PREDICCION -->
-            <div class="card  p-3 mb-3 bg-white rounded">
-                <div class="card-body">
-                    <h1 class="mb-4 text-primary">Predicción</h1>
+ <!-- PREDICCION -->
+ <div class="card  p-3 mb-3 bg-white rounded">
+    <div class="card-body">
+        <h1 class="mb-4 text-primary">Predicción</h1>
 
-                    <!-- Formulario para realizar predicción -->
-                    <form id="predictionForm" method="POST" action="/realizar-prediccion">
-                        <div class="mb-3">
-                            <label for="x_variable" class="form-label">Ingresa el valor de la variable Explicativa
-                                X (Independiente):</label>
-                            <div class="input-group">
-                                <input type="number" step="any" name="x_variable" id="x_variable" class="form-control"
-                                    required value="{% if x_variable_value %}{{ x_variable_value }}{% endif %}">
-                                <button type="button" class="btn btn-lg btn-success" onclick="realizarPrediccion()"
-                                    data-bs-toggle="popover" data-bs-trigger="hover" data-bs-placement="top"
-                                    title="Realizar Predicción"
-                                    data-bs-content="Haz clic aquí para realizar una predicción utilizando el modelo entrenado. Este proceso te permitirá obtener predicciones basadas en las variables explicativas seleccionadas durante el entrenamiento del modelo.">Realizar
-                                    Predicción</button>
-
-                            </div>
-                        </div>
-                    </form>
-
-                    <!-- Resultados de la predicción -->
-                    <div class="mb-4">
-                        <h4>Resultado de la Predicción:</h4>
-
-                        {% if result %}
-                        <div class="alert alert-info">
-                            <p class="lead mb-0">Se ha realizado una predicción para <strong>{{ result.x_variable
-                                    }}</strong> en
-                                función de <strong>{{ result.y_variable }}</strong>.</p>
-                        </div>
-
-                        {% if result.error_message %}
-                        <div class="alert alert-danger mt-3">
-                            <p>¡Ups! Parece que hubo un problema:</p>
-                            <p>{{ result.error_message }}</p>
-                        </div>
-                        {% else %}
-                        <div class="alert alert-success mt-3">
-                            <p>La predicción fue exitosa. Según el modelo, para el valor de <strong>{{ result.x_variable
-                                    }}</strong>
-                                proporcionado ({{ request.form['x_variable'] }}), se estima que el valor de <strong>{{
-                                    result.y_variable }}</strong>
-                                será aproximadamente:</p>
-                            <p class="lead fs-1">{{ result.prediction }}</p>
-                        </div>
-                        {% endif %}
-                        {% endif %}
-                    </div>
+        <!-- Formulario para realizar predicción -->
+        <form id="predictionForm" method="POST" action="/realizar-prediccion">
+            <div class="mb-3">
+                <label for="x_variable" class="form-label">Ingresa el valor de la variable Explicativa
+                    X (Independiente):</label>
+                <div class="input-group">
+                    <input type="number" step="any" name="x_variable" id="x_variable" class="form-control"
+                        required value="{% if x_variable_value %}{{ x_variable_value }}{% endif %}">
+                        <button type="submit" class="btn btn-lg btn-success" onclick="realizarPrediccion()" data-bs-toggle="popover" data-bs-trigger="hover" data-bs-placement="top"
+                        title="Realizar Predicción"
+                        data-bs-content="Haz clic aquí para realizar una predicción utilizando el modelo entrenado. Este proceso te permitirá obtener predicciones basadas en las variables explicativas seleccionadas durante el entrenamiento del modelo.">Realizar
+                        Predicción</button>
 
                 </div>
             </div>
-            <!-- FIN PREDICCION -->
+        </form>
+
+        <!-- Resultados de la predicción -->
+        <div class="mb-4">
+            <h4>Resultado de la Predicción:</h4>
+
+            {% if result %}
+            <div class="alert alert-info">
+                <p class="lead mb-0">Se ha realizado una predicción para <strong>{{ result.x_variable
+                        }}</strong> en
+                    función de <strong>{{ result.y_variable }}</strong>.</p>
+            </div>
+
+            {% if result.error_message %}
+            <div class="alert alert-danger mt-3">
+                <p>¡Ups! Parece que hubo un problema:</p>
+                <p>{{ result.error_message }}</p>
+            </div>
+            {% else %}
+            <div class="alert alert-success mt-3">
+                <p>La predicción fue exitosa. Según el modelo, para el valor de <strong>{{ result.x_variable
+                        }}</strong>
+                    proporcionado ({{ request.form['x_variable'] }}), se estima que el valor de <strong>{{
+                        result.y_variable }}</strong>
+                    será aproximadamente:</p>
+                <p class="lead fs-1">{{ result.prediction }}</p>
+            </div>
+            {% endif %}
+            {% endif %}
+        </div>
+
+    </div>
+</div>
+<!-- FIN PREDICCION -->
 
 
 
@@ -370,14 +369,8 @@
 </div>
 
 
-
-
-
-
 <script>
     function realizarPrediccion() {
-
-
         // Obtiene el valor ingresado
         var inputValue = document.getElementById('x_variable').value;
 
@@ -389,10 +382,12 @@
     }
 
     // Verifica si hay un valor para la variable X en el almacenamiento local y lo establece en el campo correspondiente
-    var xVariableValue = localStorage.getItem('x_variable');
-    if (xVariableValue) {
-        document.getElementById('x_variable').value = xVariableValue;
-    }
+    window.onload = function() {
+        var xVariableValue = localStorage.getItem('x_variable');
+        if (xVariableValue) {
+            document.getElementById('x_variable').value = xVariableValue;
+        }
+    };
 </script>
 
 {% endblock %}

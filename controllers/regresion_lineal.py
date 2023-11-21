@@ -10,6 +10,7 @@ from sklearn.linear_model import LinearRegression
 import mysql.connector
 from models.db_connection import get_db_connection
 import plotly.express as px
+import statsmodels.api as sm
 
 class RegresionLinealModel:
     def __init__(self):
@@ -34,8 +35,6 @@ class RegresionLinealModel:
         try:
             plt.figure()
 
-            self.model = LinearRegression()
-
             db = get_db_connection()
 
             if db.is_connected():
@@ -50,20 +49,13 @@ class RegresionLinealModel:
                 db.close()
 
                 if result:
-                    #print("Datos obtenidos de la base de datos:", result)
                     data_regression = pd.DataFrame(result, columns=[x_variable, y_variable])
 
-                    X = data_regression[x_variable].values.reshape(-1, 1)
-                    y = data_regression[y_variable].values.reshape(-1, 1)
+                    X = data_regression[x_variable]
+                    X = sm.add_constant(X)  # Agregar una constante para el término de intercepción
+                    y = data_regression[y_variable]
 
-                    self.scaler = StandardScaler()
-                    X_std = self.scaler.fit_transform(X)
-                    y_std = self.scaler.transform(y) # Utilizar transform durante la regresión lineal
-
-                    self.model.fit(X_std, y_std)
-
-                    y_pred = self.model.predict(X_std)
-                    y_pred = self.scaler.inverse_transform(y_pred)
+                    self.model = sm.OLS(y, X).fit()
 
                     # Utilizamos Plotly para el gráfico interactivo
                     fig = px.scatter(data_regression, x=x_variable, y=y_variable, trendline="ols")
@@ -77,16 +69,15 @@ class RegresionLinealModel:
                     registros = len(data_regression)
 
                     success_message = "Regresión lineal completada."
-                    beta_0 = self.model.intercept_[0]
-                    beta_1 = self.model.coef_[0][0] # Coeficiente de la variable independiente
-                    r_squared = self.calcular_r_squared(X, y, y_pred)
-                    correlation_coefficient = self.calcular_coeficiente_correlacion(X, y)
+                    beta_0 = self.model.params['const']
+                    print("Intercept (beta_0):", beta_0)
+                    beta_1 = self.model.params[x_variable]  # Coeficiente de la variable independiente
+                    r_squared = self.model.rsquared
+                    correlation_coefficient = data_regression.corr().loc[x_variable, y_variable]
                     values_calculated = True
-
 
                     # Después de la asignación
                     print(f"Después de la asignación - beta_0: {beta_0}, beta_1: {beta_1}, r_squared: {r_squared}")
-
 
                 else:
                     error_message = f"No se encontraron datos en la tabla {selected_table}."
@@ -106,28 +97,36 @@ class RegresionLinealModel:
             beta_0 if isinstance(beta_0, (float, int)) else None,
             beta_1 if isinstance(beta_1, (float, int)) else None,
             r_squared if isinstance(r_squared, (float, int)) else None,
-            
+
             correlation_coefficient,
             registros
         )
 
 
     def realizar_prediccion(self, x_variable):
-        if self.scaler is None or self.model is None or self.x_variable_name is None or self.y_variable_name is None:
-            raise ValueError("Debes realizar la regresión lineal primero para configurar el escalador, el modelo y los nombres de las variables.")
+        print("Realizando predicción para x_variable:", x_variable)
+        if self.model is None or self.x_variable_name is None or self.y_variable_name is None:
+            raise ValueError("Debes realizar la regresión lineal primero para configurar el modelo y los nombres de las variables.")
 
         try:
-            x_variable_std = self.scaler.transform([[x_variable]]) # Utilizar transform durante la predicción
+            print("Valor de x_variable recibido:", x_variable)
+
+            # Formatea x_variable como una matriz 2D
+            x_variable_std = np.array([[1, x_variable]])
+            print("Forma de x_variable_std:", x_variable_std.shape)
+            print("Valores de x_variable_std:", x_variable_std)
 
             y_pred = self.model.predict(x_variable_std)
-            y_pred = self.scaler.inverse_transform(y_pred)
+            print("Forma de y_pred:", y_pred.shape)
+            print("Valores de y_pred:", y_pred)
 
+            # Convierte el resultado a un valor numérico
+            prediction_value = float(y_pred[0])
 
             return {
                 'x_variable': self.x_variable_name,
                 'y_variable': self.y_variable_name,
-                'prediction': y_pred[0, 0],
-
+                'prediction': prediction_value,
                 'error_message': None
             }
         except Exception as e:
@@ -137,7 +136,6 @@ class RegresionLinealModel:
                 'prediction': None,
                 'error_message': f"Error al realizar la predicción: {e}"
             }
-
 
 
     def calcular_r_squared(self, X, y, y_pred):
