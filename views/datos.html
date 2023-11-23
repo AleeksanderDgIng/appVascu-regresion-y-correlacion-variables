@@ -1,0 +1,77 @@
+<!-- datos.html -->
+
+{% extends "index.html" %}
+{% block content %}
+
+<div class="container-fluid mt-5">
+    <h1>Seleccione una tabla:</h1>
+    <form action="{{ url_for('ver_datos') }}" method="post" class="mb-3">
+        <div class="row g-3 align-items-center">
+            <div class="col-md-6">
+                <select name="table_name" id="table_name" class="form-select" required>
+                    {% for table in tables %}
+                        <option value="{{ table.name }}">{{ table.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary">Ver Datos</button>
+            </div>
+        </div>
+    </form>
+
+
+    <div class="container-fluid mt-3">
+        <h2>Descargar Plantilla:</h2>
+        {% if table_name %}
+            <a href="{{ url_for('descargar_plantilla', table_name=table_name) }}" class="btn btn-info">Descargar Plantilla Excel</a>
+        {% else %}
+            <p>Selecciona una tabla para descargar la plantilla.</p>
+        {% endif %}
+    </div>
+
+    {% if records %}
+        <h2 class="mt-4">Datos de la tabla {{ table_name }}:</h2>
+        <div class="table-responsive" style="max-height: 400px;">
+            <table class="table table-bordered table-hover">
+                <thead class="table-dark">
+                    <tr class="small text-lg-center table-danger">
+                        <th></th>
+                        {% for column in columns %}
+                            <th>{{ column.type }}</th>
+                        {% endfor %}
+                    </tr>
+                    <tr class="text-lg-center">
+                        <th>Acciones</th>
+                        {% for column in columns %}
+                            <th>{{ column.name }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in records %}
+                        <tr>
+
+                            <td>
+                                <a href="{{ url_for('editar_registro', table_name=table_name, record_id=record[0]) }}" class="btn btn-primary">
+                                    <i class='bx bx-edit-alt nav_icon'></i>
+                                </a>
+                                <a href="{{ url_for('eliminar_registro', table_name=table_name, record_id=record[0]) }}" class="btn btn-danger">
+                                    <i class='bx bx-trash nav_icon'></i>
+                                </a>
+                            </td>
+
+                            {% for value in record %}
+                                <td>{{ value }}</td>
+                            {% endfor %}
+
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+</div>
+
+
+{% endblock %}

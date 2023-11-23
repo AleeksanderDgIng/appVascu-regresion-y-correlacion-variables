@@ -1,0 +1,26 @@
+{% extends "index.html" %}
+{% block content %}
+
+<div class="container mt-5">
+    <h1>Editar Registro en la tabla {{ table_name }}:</h1>
+
+    <form action="{{ url_for('editar_registro', table_name=table_name, record_id=record[0]) }}" method="post">
+        <div class="row">
+            {% for column in columns %}
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="{{ column }}" class="form-label">{{ column }}</label>
+                        <input type="text" class="form-control" id="{{ column }}" name="{{ column }}" value="{{ record[loop.index0] }}">
+                    </div>
+                </div>
+                {% if loop.index is even %}
+                    </div><div class="row">
+                {% endif %}
+            {% endfor %}
+        </div>
+        <a href="{{ url_for('ver_datos') }}" class="btn btn-secondary">Volver</a>
+        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+    </form>
+</div>
+
+{% endblock %}
