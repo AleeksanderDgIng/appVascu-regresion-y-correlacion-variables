@@ -490,7 +490,6 @@ def actualizar_registro_etl(table_name, record_id, nuevos_valores):
 @app.route('/eliminar/<table_name>/<int:record_id>', methods=['GET', 'POST'])
 def eliminar_registro(table_name, record_id):
     if request.method == 'POST':
-        # Lógica para eliminar el registro de la base de datos
         eliminar_registro_etl(table_name, record_id)
 
         # Redirigir a la página de ver datos después de eliminar
@@ -647,7 +646,7 @@ def cargar_registros(table_name):
                     return redirect(url_for('ver_datos'))
 
                 # Verificar duplicados en la clave primaria antes de la inserción
-                clave_primaria = obtener_clave_primaria(table_name)  # Reemplaza esto con tu función real para obtener la clave primaria
+                clave_primaria = obtener_clave_primaria(table_name)  
                 if clave_primaria is not None:
                     registros_duplicados = df[df.duplicated(subset=clave_primaria, keep=False)]
                     num_registros_duplicados = registros_duplicados.shape[0]
@@ -700,7 +699,7 @@ def cargar_registros(table_name):
 
 
 
-# Esta función debe devolver la clave primaria de la tabla dada
+# Esta función devolver la clave primaria de la tabla dada
 def obtener_clave_primaria(table_name):
     try:
         db = get_db_connection()

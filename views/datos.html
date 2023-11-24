@@ -4,7 +4,10 @@
 {% block content %}
 
 <div class="container-fluid mt-5">
-    <h1>Seleccione una tabla:</h1>
+
+    <div class="container-fluid mt-3">
+
+        <h2>Seleccione una tabla:</h2>
     <form action="{{ url_for('ver_datos') }}" method="post" class="mb-3">
         <div class="row g-3 align-items-center">
             <div class="col-md-6">
@@ -21,12 +24,11 @@
     </form>
 
 
-    <div class="container-fluid mt-3">
         <div class="row">
             <div class="col-md-6 d-flex flex-column">
                 <div class="card flex-grow-1">
                     <div class="card-body">
-                        <h2 class="card-title">Descargar Plantilla</h2>
+                        <h3 class="card-title">Descargar Plantilla</h3>
                         {% if table_name %}
                             <a href="{{ url_for('descargar_plantilla', table_name=table_name) }}" class="btn btn-info">Descargar Plantilla Excel</a>
                         {% else %}
@@ -40,9 +42,8 @@
             <div class="col-md-6 d-flex flex-column">
                 <div class="card flex-grow-1">
                     <div class="card-body">
-                        <h2 class="card-title">Cargar Registros</h2>
+                        <h3 class="card-title">Cargar Registros</h3>
                         {% if table_name %}
-                            <!-- Agrega este bloque de código dentro del formulario existente en datos.html -->
                             <form action="{{ url_for('cargar_registros', table_name=table_name) }}" method="post" enctype="multipart/form-data">
                                 <div class="mb-3">
                                     <label for="archivo_excel" class="form-label">Seleccionar archivo Excel</label>

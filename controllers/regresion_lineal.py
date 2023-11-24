@@ -52,7 +52,7 @@ class RegresionLinealModel:
                     data_regression = pd.DataFrame(result, columns=[x_variable, y_variable])
 
                     X = data_regression[x_variable]
-                    X = sm.add_constant(X)  # Agregar una constante para el término de intercepción
+                    X = sm.add_constant(X)  
                     y = data_regression[y_variable]
 
                     self.model = sm.OLS(y, X).fit()
