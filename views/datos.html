@@ -22,52 +22,108 @@
 
 
     <div class="container-fluid mt-3">
-        <h2>Descargar Plantilla:</h2>
-        {% if table_name %}
-            <a href="{{ url_for('descargar_plantilla', table_name=table_name) }}" class="btn btn-info">Descargar Plantilla Excel</a>
-        {% else %}
-            <p>Selecciona una tabla para descargar la plantilla.</p>
-        {% endif %}
+        <div class="row">
+            <div class="col-md-6 d-flex flex-column">
+                <div class="card flex-grow-1">
+                    <div class="card-body">
+                        <h2 class="card-title">Descargar Plantilla</h2>
+                        {% if table_name %}
+                            <a href="{{ url_for('descargar_plantilla', table_name=table_name) }}" class="btn btn-info">Descargar Plantilla Excel</a>
+                        {% else %}
+                            <div class="alert alert-warning" role="alert">
+                                Selecciona una tabla para descargar la plantilla.
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 d-flex flex-column">
+                <div class="card flex-grow-1">
+                    <div class="card-body">
+                        <h2 class="card-title">Cargar Registros</h2>
+                        {% if table_name %}
+                            <!-- Agrega este bloque de código dentro del formulario existente en datos.html -->
+                            <form action="{{ url_for('cargar_registros', table_name=table_name) }}" method="post" enctype="multipart/form-data">
+                                <div class="mb-3">
+                                    <label for="archivo_excel" class="form-label">Seleccionar archivo Excel</label>
+                                    <input type="file" name="archivo_excel" class="form-control" accept=".xlsx" required>
+                                </div>
+                                <div class="text-end">
+                                    <button type="submit" class="btn btn-success">Cargar Registros</button>
+                                </div>
+                            </form>
+                        {% else %}
+                            <div class="alert alert-warning" role="alert">
+                                Selecciona una tabla para cargar registros.
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
+    
+
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="container mt-3">
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
 
     {% if records %}
         <h2 class="mt-4">Datos de la tabla {{ table_name }}:</h2>
-        <div class="table-responsive" style="max-height: 400px;">
+        <div class="table-responsive" style="max-height: 600px;">
             <table class="table table-bordered table-hover">
                 <thead class="table-dark">
                     <tr class="small text-lg-center table-danger">
                         <th></th>
-                        {% for column in columns %}
-                            <th>{{ column.type }}</th>
-                        {% endfor %}
+                        {% if columns %}
+                            {% for column in columns %}
+                                <th>{{ column['type'] if column['type'] is not none else 'Tipo Desconocido' }}</th>
+                            {% endfor %}
+                        {% else %}
+                            <th>Tipo Desconocido</th>
+                        {% endif %}
                     </tr>
                     <tr class="text-lg-center">
                         <th>Acciones</th>
-                        {% for column in columns %}
-                            <th>{{ column.name }}</th>
-                        {% endfor %}
+                        {% if columns %}
+                            {% for column in columns %}
+                                <th>{{ column['name'] if column['name'] is not none else 'Nombre Desconocido' }}</th>
+                            {% endfor %}
+                        {% else %}
+                            <th>Nombre Desconocido</th>
+                        {% endif %}
                     </tr>
                 </thead>
                 <tbody>
-                    {% for record in records %}
-                        <tr>
-
-                            <td>
-                                <a href="{{ url_for('editar_registro', table_name=table_name, record_id=record[0]) }}" class="btn btn-primary">
-                                    <i class='bx bx-edit-alt nav_icon'></i>
-                                </a>
-                                <a href="{{ url_for('eliminar_registro', table_name=table_name, record_id=record[0]) }}" class="btn btn-danger">
-                                    <i class='bx bx-trash nav_icon'></i>
-                                </a>
-                            </td>
-
-                            {% for value in record %}
-                                <td>{{ value }}</td>
-                            {% endfor %}
-
-                        </tr>
-                    {% endfor %}
+                    {% if records %}
+                        {% for record in records %}
+                            <tr>
+                                <td>
+                                    <a href="{{ url_for('editar_registro', table_name=table_name, record_id=record[0]) }}" class="btn btn-primary">
+                                        <i class='bx bx-edit-alt nav_icon'></i>
+                                    </a>
+                                    <a href="{{ url_for('eliminar_registro', table_name=table_name, record_id=record[0]) }}" class="btn btn-danger">
+                                        <i class='bx bx-trash nav_icon'></i>
+                                    </a>
+                                </td>
+                                {% for value in record %}
+                                    <td>{{ value }}</td>
+                                {% endfor %}
+                            </tr>
+                        {% endfor %}
+                    {% endif %}
                 </tbody>
+                
             </table>
         </div>
     {% endif %}

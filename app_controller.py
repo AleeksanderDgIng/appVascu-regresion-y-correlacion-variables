@@ -5,17 +5,20 @@ import mysql.connector
 import os
 from io import BytesIO
 import pandas as pd
+import numpy as np
 from openpyxl import Workbook
 from openpyxl.utils.dataframe import dataframe_to_rows
 from openpyxl.styles import NamedStyle
 from openpyxl import Workbook, styles
 import tempfile
+from werkzeug.utils import secure_filename
+from openpyxl import load_workbook
+from sqlalchemy import create_engine
 
 from models.db_connection import get_db_connection
 from controllers.regresion_lineal import RegresionLinealModel
 from controllers.analizar_correlacion import analizar_correlacion
 from flask_session import Session
-from controllers.etl import *
 
 # Crear una instancia de la aplicación Flask
 app = Flask(__name__, template_folder='views')
@@ -328,6 +331,88 @@ def realizar_prediccion():
 
 #---------------------------- RUTA ETL----------------------------
 
+# Función para conectar a la base de datos MySQL
+def connect_to_db():
+    try:
+        db = get_db_connection()
+        if db is not None:
+            return db
+        else:
+            return None
+    except mysql.connector.Error as err:
+        return None
+    
+    # Función para obtener la lista de tablas en la base de datos OK
+def get_table_list_etl():
+    db = connect_to_db()
+    if db is not None:
+        cursor = db.cursor()
+        cursor.execute("SHOW TABLES")
+        tables = [table[0] for table in cursor]
+        table_list = []
+        for table_name in tables:
+            columns = get_table_columns_etl(table_name)
+            table_list.append({'name': table_name, 'columns': columns})
+        db.close()
+        return table_list
+    else:
+        return []
+    
+# Función para obtener los registros de una tabla
+def get_table_records_etl(table_name):
+    db = connect_to_db()
+    if db is not None:
+        cursor = db.cursor()
+        cursor.execute(f"SELECT * FROM {table_name}")
+        records = cursor.fetchall()
+        db.close()
+        print(f"Registros obtenidos de la tabla {table_name}: {records}")
+        return records
+    else:
+        return []
+    
+    
+    # Función para obtener las columnas de una tabla y sus registros
+def get_table_info_etl(table_name):
+    columns = get_table_columns_etl(table_name)
+    records = get_table_records_etl(table_name)
+    return columns, records
+
+# Función para obtener nombres y tipos de datos de las columnas
+def get_table_columns_etl(table_name):
+    db = connect_to_db()
+    if db is not None:
+        cursor = db.cursor()
+        cursor.execute(f"SHOW COLUMNS FROM {table_name}")
+        columns = [{'name': col[0], 'type': col[1]} for col in cursor.fetchall()]
+        db.close()
+        return columns
+    else:
+        return []
+    
+
+# Función para obtener los nombres de las columnas de una tabla
+def obtener_nombres_columnas_etl(selected_table):
+    try:
+        db = get_db_connection()
+        if db.is_connected():
+            cursor = db.cursor()
+            query = f"SHOW COLUMNS FROM {selected_table}"
+            cursor.execute(query)
+            result = cursor.fetchall()
+            db.close()
+
+            if result:
+                column_names = [row[0] for row in result]
+                return column_names
+            else:
+                raise Exception(f"No se encontraron columnas en la tabla '{selected_table}'.")
+        else:
+            raise Exception("La conexión a la base de datos no está activa.")
+    except Exception as e:
+        raise Exception(f"Error al conectar a la base de datos: {e}")
+
+
 # Ruta para ver y seleccionar datos de una tabla
 @app.route('/ver-datos', methods=['GET', 'POST'])
 def ver_datos():
@@ -339,10 +424,12 @@ def ver_datos():
     if request.method == 'POST':
         table_name = request.form.get('table_name')
         columns, records = get_table_info_etl(table_name)
+        
+        print(f"Registros obtenidos después de la carga: {records}")
 
     return render_template('datos.html', tables=tables, table_name=table_name, columns=columns, records=records)
 
-#---------------
+#--------------- EDITAR REGISTRO ---------------
 # Ruta para editar un registro
 @app.route('/editar/<table_name>/<int:record_id>', methods=['GET', 'POST'])
 def editar_registro(table_name, record_id):
@@ -397,7 +484,7 @@ def actualizar_registro_etl(table_name, record_id, nuevos_valores):
         db.commit()
         db.close()
 
-#----------------
+#--------------- ELIMINAR REGISTRO ---------------
 
 # Ruta para eliminar un registro
 @app.route('/eliminar/<table_name>/<int:record_id>', methods=['GET', 'POST'])
@@ -437,10 +524,10 @@ def eliminar_registro_etl(table_name, record_id):
 
         return record  # Devolvemos los datos del registro eliminado o None si no se encontraron datos
 
-#-------------------
+#--------------- DESCARGAR PLANTILLA EXCEL ---------------
 
 # Función para obtener nombres y tipos de datos de las columnas
-def get_table_columns_etl(table_name):
+def get_table_columns_etl_des(table_name):
     db = connect_to_db()
     if db is not None:
         cursor = db.cursor()
@@ -455,7 +542,7 @@ def get_table_columns_etl(table_name):
 @app.route('/descargar-plantilla/<table_name>', methods=['GET'])
 def descargar_plantilla(table_name):
     # Obtener información sobre las columnas y tipos de datos de la tabla desde la base de datos
-    columnas_tipos = get_table_columns_etl(table_name)
+    columnas_tipos = get_table_columns_etl_des(table_name)
     columnas = [col[0] for col in columnas_tipos]
     tipos_de_datos = [col[1] for col in columnas_tipos]
 
@@ -502,11 +589,138 @@ def descargar_plantilla(table_name):
     )
 
 
+#--------------- CARGAR DATOS DESDE EXCEL ---------------
+
+# Ruta para cargar registros desde un archivo de Excel
+@app.route('/cargar-registros/<table_name>', methods=['POST'])
+def cargar_registros(table_name):
+    if request.method == 'POST':
+        try:
+            # Obtener el archivo enviado desde el formulario
+            archivo_excel = request.files['archivo_excel']
+
+            if archivo_excel.filename == '':
+                flash('Error: No se seleccionó ningún archivo.', 'error')
+                return redirect(url_for('ver_datos'))
+
+            # Validar que el archivo sea un archivo Excel
+            if not archivo_excel.filename.endswith('.xlsx'):
+                flash('Error: El archivo debe tener la extensión .xlsx.', 'error')
+                return redirect(url_for('ver_datos'))
+
+            # Cargar el archivo Excel en un DataFrame de Pandas
+            df = pd.read_excel(archivo_excel)
+
+            # Ajustes para manejar tipos de datos y valores nulos de manera dinámica
+            for columna in df.columns:
+                if pd.api.types.is_numeric_dtype(df[columna]):
+                    # Convertir a Python int si la columna es de tipo numérico
+                    df[columna] = pd.to_numeric(df[columna], errors='coerce', downcast='integer')
+                elif pd.api.types.is_datetime64_any_dtype(df[columna]):
+                    # Convertir a fecha si la columna es de tipo fecha
+                    df[columna] = pd.to_datetime(df[columna], errors='coerce')
+
+            # Llenar los valores nulos con 0 o cadena vacía, ajusta según sea necesario
+            df.fillna(0, inplace=True)
+
+            print("DataFrame desde el archivo Excel:")
+            print(df)
+
+            # Conectar a la base de datos
+            db = connect_to_db()
+            if db is not None:
+                # Obtener los nombres de las columnas de la tabla
+                columnas_tabla = obtener_nombres_columnas_etl(table_name)
+                print("Columnas en la tabla de la base de datos:")
+                print(columnas_tabla)
+                
+                # Filtrar solo las columnas que existen en la base de datos
+                columnas_validas = [col for col in df.columns if col in columnas_tabla]
+
+                # Filtrar el DataFrame para incluir solo las columnas válidas
+                df = df[columnas_validas]
+
+                # Verificar si hay alguna columna requerida que falta en el archivo Excel
+                columnas_faltantes = [col for col in columnas_tabla if col not in columnas_validas]
+                if columnas_faltantes:
+                    flash(f'Error: Las siguientes columnas son requeridas y faltan en el archivo Excel: {", ".join(columnas_faltantes)}', 'error')
+                    return redirect(url_for('ver_datos'))
+
+                # Verificar duplicados en la clave primaria antes de la inserción
+                clave_primaria = obtener_clave_primaria(table_name)  # Reemplaza esto con tu función real para obtener la clave primaria
+                if clave_primaria is not None:
+                    registros_duplicados = df[df.duplicated(subset=clave_primaria, keep=False)]
+                    num_registros_duplicados = registros_duplicados.shape[0]
+                    if num_registros_duplicados > 0:
+                        mensaje_duplicados = f'Error: Se encontraron registros duplicados en la clave primaria: {registros_duplicados.to_dict(orient="records")}'
+                        flash(mensaje_duplicados, 'error')
+                        return redirect(url_for('ver_datos'))
+
+                # Convertir el DataFrame a una lista de tuplas para su inserción en la base de datos
+                registros = [tuple(int(x) if isinstance(x, (np.integer, np.int64, np.int8, np.int16, np.int32)) else x for x in row) for row in df.to_records(index=False)]
+
+                print("Registros a ser insertados en la base de datos:")
+                print(registros)
+
+                # Construir la consulta SQL para la inserción
+                consulta_insercion = f"INSERT INTO {table_name} ({', '.join(columnas_validas)}) VALUES ({', '.join(['%s' for _ in columnas_validas])}) ON DUPLICATE KEY UPDATE id=id"
+
+                print("Consulta de inserción:")
+                print(consulta_insercion)
+
+                # Ejecutar la consulta de inserción
+                with db.cursor() as cursor:
+                    cursor.executemany(consulta_insercion, registros)
+
+                # Confirmar la transacción y cerrar la conexión
+                db.commit()
+                db.close()
+                
+                # Imprimir el número de filas afectadas
+                num_filas_afectadas = cursor.rowcount
+                print(f"Número de filas afectadas: {num_filas_afectadas}")
+
+                # Imprimir el número de registros duplicados
+                print(f"Número de registros duplicados: {num_registros_duplicados}")
+
+                # Imprimir el número de registros nulos
+                num_registros_nulos = df.isnull().sum().sum()
+                print(f"Número de registros nulos: {num_registros_nulos}")
+
+                flash(f'Registros cargados exitosamente. Filas afectadas: {num_filas_afectadas}, Duplicados: {num_registros_duplicados}, Nulos: {num_registros_nulos}', 'success')
+            else:
+                flash('Error al conectar a la base de datos.', 'error')
+        except Exception as e:
+            flash(f'Error al cargar registros: {str(e)}', 'error')
+            print(f'Error al cargar registros: {str(e)}')
+            
+        # Redirigir a la página de ver datos
+        return redirect(url_for('ver_datos'))
 
 
 
 
+# Esta función debe devolver la clave primaria de la tabla dada
+def obtener_clave_primaria(table_name):
+    try:
+        db = get_db_connection()
+        cursor = db.cursor()
+        cursor.execute(f"DESCRIBE {table_name}")
+        columns = cursor.fetchall()
+        db.close()
 
+        # Filtrar las columnas que son clave primaria
+        primary_key_columns = [col[0] for col in columns if "PRI" in col[3]]
+
+        return primary_key_columns
+    except Exception as e:
+        print(f"Error al obtener clave primaria: {str(e)}")
+        return None
+
+
+
+
+#--------------- INICIO APP ---------------
 
 # Iniciar la aplicación si este archivo se ejecuta directamente
 if __name__ == '__main__':

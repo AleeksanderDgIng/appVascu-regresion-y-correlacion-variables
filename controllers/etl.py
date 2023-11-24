@@ -82,3 +82,4 @@ def obtener_nombres_columnas_etl(selected_table):
     except Exception as e:
         raise Exception(f"Error al conectar a la base de datos: {e}")
 
+

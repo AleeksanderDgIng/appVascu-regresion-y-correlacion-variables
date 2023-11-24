@@ -1,0 +1,15 @@
+{% extends "index.html" %}
+{% block content %}
+
+<div class="container mt-5">
+    <h1>Cargar Datos a la tabla {{ table_name }} desde un archivo Excel:</h1>
+    <form action="{{ url_for('cargar_datos', table_name=table_name) }}" method="post" enctype="multipart/form-data">
+        <div class="mb-3">
+            <label for="file" class="form-label">Seleccionar Archivo Excel:</label>
+            <input type="file" class="form-control" id="file" name="file" accept=".xlsx">
+        </div>
+        <button type="submit" class="btn btn-primary">Cargar Datos</button>
+    </form>
+</div>
+
+{% endblock %}
