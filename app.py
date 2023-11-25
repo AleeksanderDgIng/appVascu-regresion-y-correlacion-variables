@@ -112,11 +112,17 @@ def obtener_nombres_columnas(selected_table):
     except Exception as e:
         raise Exception(f"Error al conectar a la base de datos: {e}")
 
-# Ruta principal ("/") para mostrar la página index.html
 @app.route('/', methods=['GET'])
+def inicio_marca():
+    return render_template('inicio_marca.html')
+
+
+@app.route('/index', methods=['GET'])
 def index():
     tables = get_table_list()
     return render_template('seleccion.html', action='seleccion', tables=tables, selected_tables=[])
+
+
 
 # Ruta para procesar la selección de tabla(s) en la base de datos y mostrar opciones de acción
 @app.route('/seleccionar-tabla/<action>', methods=['GET', 'POST'])

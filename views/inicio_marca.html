@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bienvenido a Inversiones Vascu SAS</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <style>
+        body {
+            background: url('/static/image/dataIng.jpg') no-repeat center center fixed;
+            background-size: cover;
+            color: #fff; /* Color del texto claro */
+        }
+
+        .cover-container {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            margin-bottom: auto;
+            text-align: center;
+        }
+
+        main {
+            text-align: center;
+            flex: 1;
+            max-width: 800px; /* Ajusta este valor según tus preferencias */
+            margin: 0 auto; /* Centra el contenido */
+        }
+
+        footer {
+            text-align: center;
+        }
+
+        .cover-heading {
+            font-size: 3em;
+            margin-bottom: 20px;
+        }
+
+        .small {
+            font-size: 1.2em;
+            margin-bottom: 30px;
+        }
+
+        .btn-lg {
+            padding: .75rem 1.25rem;
+            font-size: 1.5em;
+        }
+
+        .logo {
+            max-width: 10%;
+            height: auto;
+            margin-right: 15px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="cover-container d-flex w-100 h-100 p-3 mx-auto flex-column">
+        <header class="mb-auto">
+            <div>
+                <img src="/static/image/logoVascu.png" alt="Logo" class="logo">
+            </div>
+        </header>
+
+        <main class="px-3">
+            <h1 class="cover-heading">Prototipo de Análisis de Datos Automatizado</h1>
+            
+        </main>
+
+        <footer class="mt-auto">
+            <p class="lead">
+                <a href="{{ url_for('index') }}" class="btn btn-lg btn-light">Iniciar Análisis</a>
+
+            </p>
+            <p>Todos los derechos reservados &copy; 2023</p>
+        </footer>
+    </div>
+
+</body>
+</html>

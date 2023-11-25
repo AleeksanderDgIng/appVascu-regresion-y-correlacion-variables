@@ -5,8 +5,6 @@ import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import LinearRegression
 import mysql.connector
 from models.db_connection import get_db_connection
 import plotly.express as px

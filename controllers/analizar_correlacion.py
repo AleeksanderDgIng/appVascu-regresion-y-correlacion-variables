@@ -6,7 +6,6 @@ import seaborn as sns
 import matplotlib
 import plotly.express as px
 matplotlib.use('Agg')
-import matplotlib.pyplot as plt
 from scipy.stats import pearsonr
 from models.db_connection import get_db_connection
 
