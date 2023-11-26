@@ -9,7 +9,7 @@ def get_db_connection():
             host="localhost",
             user="root",
             password="",
-            database="vascubd"
+            database="db_vascus"
         )
         return db
     except mysql.connector.Error as err:

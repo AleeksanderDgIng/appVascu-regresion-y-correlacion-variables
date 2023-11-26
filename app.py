@@ -623,10 +623,18 @@ def cargar_registros(table_name):
                     df[columna] = pd.to_numeric(df[columna], errors='coerce', downcast='integer')
                 elif pd.api.types.is_datetime64_any_dtype(df[columna]):
                     # Convertir a fecha si la columna es de tipo fecha
-                    df[columna] = pd.to_datetime(df[columna], errors='coerce')
+                    formato_fecha = "%Y-%m-%d"  # Ajusta el formato según tus fechas
+                    df[columna] = pd.to_datetime(df[columna], errors='coerce', format=formato_fecha)
 
             # Llenar los valores nulos con 0 o cadena vacía, ajusta según sea necesario
             df.fillna(0, inplace=True)
+
+                        # Asegurarse de que las fechas sean reconocidas correctamente y no sean numpy.datetime64
+            # Asegurarse de que las fechas sean reconocidas correctamente y no sean numpy.datetime64
+            for columna_fecha in df.select_dtypes(include=['datetime64']).columns:
+                formato_fecha = "%Y-%m-%d"  # Ajusta el formato según tus fechas
+                df[columna_fecha] = pd.to_datetime(df[columna_fecha], errors='coerce').dt.date
+
 
             print("DataFrame desde el archivo Excel:")
             print(df)
@@ -638,7 +646,7 @@ def cargar_registros(table_name):
                 columnas_tabla = obtener_nombres_columnas_etl(table_name)
                 print("Columnas en la tabla de la base de datos:")
                 print(columnas_tabla)
-                
+
                 # Filtrar solo las columnas que existen en la base de datos
                 columnas_validas = [col for col in df.columns if col in columnas_tabla]
 
@@ -652,7 +660,7 @@ def cargar_registros(table_name):
                     return redirect(url_for('ver_datos'))
 
                 # Verificar duplicados en la clave primaria antes de la inserción
-                clave_primaria = obtener_clave_primaria(table_name)  
+                clave_primaria = obtener_clave_primaria(table_name)
                 if clave_primaria is not None:
                     registros_duplicados = df[df.duplicated(subset=clave_primaria, keep=False)]
                     num_registros_duplicados = registros_duplicados.shape[0]
@@ -662,7 +670,8 @@ def cargar_registros(table_name):
                         return redirect(url_for('ver_datos'))
 
                 # Convertir el DataFrame a una lista de tuplas para su inserción en la base de datos
-                registros = [tuple(int(x) if isinstance(x, (np.integer, np.int64, np.int8, np.int16, np.int32)) else x for x in row) for row in df.to_records(index=False)]
+                # Asegúrate de que las fechas sean objetos datetime de Python y no numpy.datetime64
+                registros = [tuple(str(x) if isinstance(x, pd.Timestamp) else int(x) if isinstance(x, (np.integer, np.int64, np.int8, np.int16, np.int32)) else x for x in row) for row in df.to_records(index=False)]
 
                 print("Registros a ser insertados en la base de datos:")
                 print(registros)
@@ -680,7 +689,7 @@ def cargar_registros(table_name):
                 # Confirmar la transacción y cerrar la conexión
                 db.commit()
                 db.close()
-                
+
                 # Imprimir el número de filas afectadas
                 num_filas_afectadas = cursor.rowcount
                 print(f"Número de filas afectadas: {num_filas_afectadas}")
@@ -698,9 +707,10 @@ def cargar_registros(table_name):
         except Exception as e:
             flash(f'Error al cargar registros: {str(e)}', 'error')
             print(f'Error al cargar registros: {str(e)}')
-            
+
         # Redirigir a la página de ver datos
         return redirect(url_for('ver_datos'))
+
 
 
 
