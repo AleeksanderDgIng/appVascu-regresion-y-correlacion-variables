@@ -64,7 +64,7 @@
         </div>
     </div>
     
-
+    <h2 class="mt-4">Datos de la tabla <span class="display-5 text-primary">{{ table_name }}</span>:</h2>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
@@ -80,7 +80,6 @@
   {% endwith %}
 
     {% if records %}
-        <h2 class="mt-4">Datos de la tabla {{ table_name }}:</h2>
         <div class="table-responsive" style="max-height: 600px;">
             <table class="table table-bordered table-hover">
                 <thead class="table-dark">
@@ -129,6 +128,21 @@
         </div>
     {% endif %}
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var tableSelect = document.getElementById('table_name');
+        var selectedTable = localStorage.getItem('selectedTable');
+
+        if (selectedTable) {
+            tableSelect.value = selectedTable;
+        }
+
+        tableSelect.addEventListener('change', function() {
+            localStorage.setItem('selectedTable', this.value);
+        });
+    });
+</script>
 
 
 {% endblock %}
