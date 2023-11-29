@@ -14,6 +14,9 @@ import tempfile
 from werkzeug.utils import secure_filename
 from openpyxl import load_workbook
 from sqlalchemy import create_engine
+import plotly.express as px
+from plotly.subplots import make_subplots
+import plotly.graph_objects as go
 
 from models.db_connection import get_db_connection
 from controllers.regresion_lineal import RegresionLinealModel
@@ -713,8 +716,6 @@ def cargar_registros(table_name):
 
 
 
-
-
 # Esta función devolver la clave primaria de la tabla dada
 def obtener_clave_primaria(table_name):
     try:
@@ -731,6 +732,103 @@ def obtener_clave_primaria(table_name):
     except Exception as e:
         print(f"Error al obtener clave primaria: {str(e)}")
         return None
+
+#--------------- DASHBOARD ---------------
+
+
+@app.route('/dashboard', methods=['GET'])
+def mostrar_dashboard():
+    # Obtener los datos de la tabla "clientes"
+    db = connect_to_db()
+    cursor = db.cursor()
+    cursor.execute("SELECT * FROM clientes")
+    clientes_data = cursor.fetchall()
+
+    # Obtener los datos de la tabla "productos"
+    cursor.execute("SELECT * FROM productos")
+    productos_data = cursor.fetchall()
+
+    # Obtener los datos de la tabla "lotes"
+    cursor.execute("SELECT * FROM lotes")
+    lotes_data = cursor.fetchall()
+
+    # Obtener los datos de la tabla intermedia "ProductosLotes"
+    cursor.execute("SELECT * FROM ProductosLotes")
+    productos_lotes_data = cursor.fetchall()
+
+    db.close()
+
+    # Crear un DataFrame de Pandas con los datos de clientes
+    df_clientes = pd.DataFrame(clientes_data, columns=["id", "Nombre", "Celular", "Tipo_Documento", "Num_Documento", "Ciudad", "Direccion", "Tipo_Cliente"])
+
+    # Crear un DataFrame de Pandas con los datos de productos
+    df_productos = pd.DataFrame(productos_data, columns=["id", "Nombre_Producto"])
+
+    # Crear un DataFrame de Pandas con los datos de lotes
+    df_lotes = pd.DataFrame(lotes_data, columns=["id", "Fecha_Fabricacion", "Fecha_Vencimiento", "Dias_Caducar",
+                                                 "Unidades_Preparadas", "Costo_Unitario", "Precio_Detal", "Precio_Mayorista",
+                                                 "Unidades_Totales_vendidas", "Ventas_Totales", "Unidades_Disponibles", "Utilidad_Total"])
+    
+    # Crear un DataFrame de Pandas con los datos de la tabla intermedia "ProductosLotes"
+    df_productos_lotes = pd.DataFrame(productos_lotes_data, columns=["id", "id_Producto", "id_Lote"])
+    
+    # Fusionar las tablas "productos" y "lotes" utilizando la tabla intermedia "ProductosLotes"
+    df_productos_lotes = pd.merge(df_productos_lotes, df_productos, left_on='id_Producto', right_on='id')
+    df_productos_lotes = pd.merge(df_productos_lotes, df_lotes, left_on='id_Lote', right_on='id')
+    
+    # Verificar los nombres de las columnas después de la fusión
+    print(df_productos_lotes.columns)
+
+    # Contar el número de clientes por ciudad
+    conteo_ciudad = df_clientes['Ciudad'].value_counts()
+
+    # Crear un gráfico de barras personalizado para clientes
+    fig_clientes = px.bar(
+        x=conteo_ciudad.index,
+        y=conteo_ciudad.values,
+        labels={'x': 'Ciudad', 'y': 'Número de Clientes'},
+        title=f'Número de Clientes por Ciudad (Total Clientes: {len(df_clientes)})',
+        color=conteo_ciudad.values,
+        color_continuous_scale='Viridis',
+        text=conteo_ciudad.values,
+        height=500,
+    )
+
+    # Configurar el diseño del gráfico de clientes
+    fig_clientes.update_layout(
+        showlegend=False,
+        xaxis_title='Ciudad',
+        yaxis_title='Número de Clientes',
+        font=dict(family='Arial', size=14, color='black'),
+        title_font=dict(size=20, family='Arial'),
+    )
+
+    # Convertir el gráfico de clientes a HTML
+    graph_html_clientes = fig_clientes.to_html(full_html=False)
+
+    # Crear un gráfico de barras para productos
+    fig_productos = px.bar(df_productos_lotes, x='Nombre_Producto', y='Unidades_Disponibles', title='Unidades Disponibles por Producto')
+
+    # Configurar el diseño del gráfico de productos
+    fig_productos.update_layout(
+        xaxis_title='Producto',
+        yaxis_title='Unidades Disponibles',
+        font=dict(family='Arial', size=14, color='black'),
+        title_font=dict(size=20, family='Arial'),
+    )
+
+    # Convertir el gráfico de productos a HTML
+    graph_html_productos = fig_productos.to_html(full_html=False)
+
+    return render_template('dashboard.html', graph_html_clientes=graph_html_clientes, graph_html_productos=graph_html_productos)
+
+
+
+
+
+
+
+
 
 
 
