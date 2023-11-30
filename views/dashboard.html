@@ -13,8 +13,8 @@
     <div id="container-fluid">
         <div id="container-fluid" class="row">
             <!-- Tarjeta 1 -->
-            <div class="col-md-6 mb-4">
-                <div class="card">
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
                 
                     <div class="card-body">
                         {{ graph_html_clientes | safe }}
@@ -23,51 +23,68 @@
             </div>
     
             <!-- Tarjeta 2 -->
-            <div class="col-md-6 mb-4">
-                <div class="card">
-                    <div class="card-header">
-                        Gráfico 2
-                    </div>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
                     <div class="card-body">
                         {{ graph_html_productos | safe }}
                     </div>
                 </div>
             </div>
+
+            <!-- Tarjeta 2 -->
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        {{ graph_html_productos_lotes | safe }}
+                    </div>
+                </div>
+            </div>
+
         </div>
-    
-        <!-- Otros elementos o tarjetas adicionales pueden ir aquí -->
     </div>
 
     <div id="container-fluid">
         <div id="container-fluid" class="row">
-            <!-- Tarjeta 1 -->
-            <div class="col-md-6 mb-4">
-                <div class="card">
-                    <div class="card-header">
-                        Gráfico 3
-                    </div>
+            <!-- Tarjeta 3 -->
+            <div class="col-md-12 mb-4">
+                <div class="card h-100">
                     <div class="card-body">
-                        <!-- Inserta aquí el contenido de tu primer gráfico -->
-                       
-                    </div>
-                </div>
-            </div>
-    
-            <!-- Tarjeta 2 -->
-            <div class="col-md-6 mb-4">
-                <div class="card">
-                    <div class="card-header">
-                        Gráfico 4
-                    </div>
-                    <div class="card-body">
-                        <!-- Inserta aquí el contenido de tu segundo gráfico -->
-                       
+                        {{ graph_html_insumos | safe  }}
                     </div>
                 </div>
             </div>
         </div>
-    
-        <!-- Otros elementos o tarjetas adicionales pueden ir aquí -->
     </div>
+
+
+    <div id="container-fluid">
+        <div id="container-fluid" class="row">
+            <!-- Tarjeta 3 -->
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                
+                    <div class="card-body">
+                        {{ graph_html_ventasproductos | safe  }}
+                    </div>
+                </div>
+            </div>
+    
+            <!-- Tarjeta 4 -->
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        {{ graph_html_ventas_tipo | safe }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
+
+    
+
+
+    
 
 {% endblock %}

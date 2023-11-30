@@ -18,6 +18,7 @@ import plotly.express as px
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 
+
 from models.db_connection import get_db_connection
 from controllers.regresion_lineal import RegresionLinealModel
 from controllers.analizar_correlacion import analizar_correlacion
@@ -715,7 +716,6 @@ def cargar_registros(table_name):
         return redirect(url_for('ver_datos'))
 
 
-
 # Esta función devolver la clave primaria de la tabla dada
 def obtener_clave_primaria(table_name):
     try:
@@ -733,8 +733,10 @@ def obtener_clave_primaria(table_name):
         print(f"Error al obtener clave primaria: {str(e)}")
         return None
 
-#--------------- DASHBOARD ---------------
 
+
+
+#--------------- DASHBOARD ---------------
 
 @app.route('/dashboard', methods=['GET'])
 def mostrar_dashboard():
@@ -744,6 +746,8 @@ def mostrar_dashboard():
     cursor.execute("SELECT * FROM clientes")
     clientes_data = cursor.fetchall()
 
+    #___________OBTENER DATOS___________
+    
     # Obtener los datos de la tabla "productos"
     cursor.execute("SELECT * FROM productos")
     productos_data = cursor.fetchall()
@@ -756,31 +760,116 @@ def mostrar_dashboard():
     cursor.execute("SELECT * FROM ProductosLotes")
     productos_lotes_data = cursor.fetchall()
 
+    # Obtener los datos de la tabla "ventasproductos" con información adicional de productos
+    cursor.execute("""
+        SELECT vp.id, vp.Precio_Lote, vp.Unidades_Vendidas_Producto, vp.Subtotal_Producto,
+            vp.id_Venta, vp.id_Producto, p.Nombre_Producto
+        FROM ventasproductos vp
+        INNER JOIN productos p ON vp.id_Producto = p.id
+    """)
+    ventasproductos_data = cursor.fetchall()
+
+    # Obtener los datos de la tabla "ventas"
+    cursor.execute("SELECT * FROM ventas")
+    ventas_data = cursor.fetchall()
+    
+    cursor.execute("SELECT * FROM insumos")
+    insumos_data = cursor.fetchall()
+    
+
     db.close()
 
-    # Crear un DataFrame de Pandas con los datos de clientes
+    #___________CREAR DATA FRAME___________
+    
+    # clientes
     df_clientes = pd.DataFrame(clientes_data, columns=["id", "Nombre", "Celular", "Tipo_Documento", "Num_Documento", "Ciudad", "Direccion", "Tipo_Cliente"])
 
-    # Crear un DataFrame de Pandas con los datos de productos
+    # productos
     df_productos = pd.DataFrame(productos_data, columns=["id", "Nombre_Producto"])
 
-    # Crear un DataFrame de Pandas con los datos de lotes
+    # lotes
     df_lotes = pd.DataFrame(lotes_data, columns=["id", "Fecha_Fabricacion", "Fecha_Vencimiento", "Dias_Caducar",
-                                                 "Unidades_Preparadas", "Costo_Unitario", "Precio_Detal", "Precio_Mayorista",
-                                                 "Unidades_Totales_vendidas", "Ventas_Totales", "Unidades_Disponibles", "Utilidad_Total"])
-    
-    # Crear un DataFrame de Pandas con los datos de la tabla intermedia "ProductosLotes"
+                                                "Unidades_Preparadas", "Costo_Unitario", "Precio_Detal", "Precio_Mayorista",
+                                                "Unidades_Totales_vendidas", "Ventas_Totales", "Unidades_Disponibles", "Utilidad_Total"])
+
+    # ventasproductos y productos
+    df_ventasproductos = pd.DataFrame(ventasproductos_data, columns=["id", "Precio_Lote", "Unidades_Vendidas_Producto", "Subtotal_Producto", "id_Venta", "id_Producto", "Nombre_Producto"])
+
+    # ProductosLotes
     df_productos_lotes = pd.DataFrame(productos_lotes_data, columns=["id", "id_Producto", "id_Lote"])
-    
+
     # Fusionar las tablas "productos" y "lotes" utilizando la tabla intermedia "ProductosLotes"
     df_productos_lotes = pd.merge(df_productos_lotes, df_productos, left_on='id_Producto', right_on='id')
     df_productos_lotes = pd.merge(df_productos_lotes, df_lotes, left_on='id_Lote', right_on='id')
-    
-    # Verificar los nombres de las columnas después de la fusión
-    print(df_productos_lotes.columns)
 
+    #ventas
+    df_ventas = pd.DataFrame(ventas_data, columns=["id", "Tipo_Venta", "Subtotal_Venta", "Fecha_venta", "Descuento", "Costo_Envio", "Total_Venta"])
+
+    # Crear DataFrame
+    df_insumos = pd.DataFrame(insumos_data, columns=["id", "Nombre", "Fecha_Compra", "Fecha_Vencimiento", "Dias_Caducar",
+                                                "Precio_Total", "Cantidad_Adquirida", "Cantidad_Disponible", "Cantidad_Usada",
+                                                "Unidad_Medida", "Desperdicio", "Proveedor", "Precio_Unitario"])
+
+    # Convertir las columnas de fecha a tipo datetime
+    df_insumos['Fecha_Compra'] = pd.to_datetime(df_insumos['Fecha_Compra'])
+    df_insumos['Fecha_Vencimiento'] = pd.to_datetime(df_insumos['Fecha_Vencimiento'])
+    
+    # Ordenar DataFrame por fecha de compra
+    df_insumos = df_insumos.sort_values(by='Fecha_Compra')
+    
+    #___________CACULOS___________
+    
     # Contar el número de clientes por ciudad
     conteo_ciudad = df_clientes['Ciudad'].value_counts()
+
+    # Calcular el Total_Venta por Tipo_Venta
+    total_por_tipo_venta = df_ventas.groupby('Tipo_Venta')['Total_Venta'].sum().reset_index()
+    
+    
+
+    #________________GRAFICO lotes asociados a un producto y sus Unidades_Preparadas ___________________
+    
+    # Crear un gráfico de barras para visualizar los lotes asociados a un producto y sus Unidades_Preparadas
+    fig_productos_lotes = px.bar(df_productos_lotes, x='id_Lote', y='Unidades_Preparadas',
+                                color='Nombre_Producto', labels={'Unidades_Preparadas': 'Unidades Preparadas'},
+                                title='Unidades Preparadas por Lote y Producto',
+                                hover_data=['Nombre_Producto', 'Unidades_Preparadas']) 
+
+    # Configurar el diseño del gráfico
+    fig_productos_lotes.update_layout(
+        xaxis_title='ID del Lote',
+        yaxis_title='Unidades Preparadas',
+        font=dict(family='Arial', size=14, color='black'),
+        title_font=dict(size=20, family='Arial'),
+    )
+
+    # Convertir el gráfico a HTML
+    graph_html_productos_lotes = fig_productos_lotes.to_html(full_html=False)
+
+        
+    
+    
+    #________________GRAFICO cantidades insumos ___________________
+    
+    # Crear gráfico de líneas para las cantidades de insumos
+    fig_insumos = px.line(df_insumos, x='Nombre', y=['Cantidad_Adquirida', 'Cantidad_Disponible', 'Cantidad_Usada'],
+                        labels={'value': 'Cantidad', 'variable': 'Tipo'},
+                        title='Cantidades de Insumos')
+
+    # Configurar el diseño del gráfico de insumos
+    fig_insumos.update_layout(
+        xaxis_title='Insumos',
+        yaxis_title='Cantidad',
+        font=dict(family='Arial', size=14, color='black'),
+        title_font=dict(size=20, family='Arial'),
+        height=600,
+    )
+
+    # Convertir el gráfico a HTML
+    graph_html_insumos = fig_insumos.to_html(full_html=False)
+
+
+    #________________GRAFICO clientes____________________
 
     # Crear un gráfico de barras personalizado para clientes
     fig_clientes = px.bar(
@@ -806,12 +895,14 @@ def mostrar_dashboard():
     # Convertir el gráfico de clientes a HTML
     graph_html_clientes = fig_clientes.to_html(full_html=False)
 
+    #________________GRAFICO productos Unidades disponibles ____________________
+
     # Crear un gráfico de barras para productos
     fig_productos = px.bar(df_productos_lotes, x='Nombre_Producto', y='Unidades_Disponibles', title='Unidades Disponibles por Producto')
 
     # Configurar el diseño del gráfico de productos
     fig_productos.update_layout(
-        xaxis_title='Producto',
+        xaxis_title='Productos Vascu SAS',
         yaxis_title='Unidades Disponibles',
         font=dict(family='Arial', size=14, color='black'),
         title_font=dict(size=20, family='Arial'),
@@ -820,16 +911,46 @@ def mostrar_dashboard():
     # Convertir el gráfico de productos a HTML
     graph_html_productos = fig_productos.to_html(full_html=False)
 
-    return render_template('dashboard.html', graph_html_clientes=graph_html_clientes, graph_html_productos=graph_html_productos)
+    #________________GRAFICO ventasproductos ____________________
+
+    # Crear un gráfico de barras apiladas para visualizar las ventas de productos
+    fig_ventasproductos = px.bar(
+        df_ventasproductos,
+        x='id_Venta',  # Cada transacción en el eje X
+        y='Subtotal_Producto',  # Altura de la barra según el subtotal del producto
+        color='Nombre_Producto',  # Color de la barra según el nombre del producto
+        labels={'id_Venta': 'ID de Venta', 'Subtotal_Producto': 'Subtotal del Producto'},
+        title='Ventas de Productos por Transacción',
+    )
+    # Configurar el diseño del gráfico de ventas de productos
+    fig_ventasproductos.update_layout(
+        xaxis_title='ID de Venta',
+        yaxis_title='Subtotal del Producto',
+        font=dict(family='Arial', size=14, color='black'),
+        title_font=dict(size=20, family='Arial'),
+        barmode='stack',  # Barras apiladas
+    )
+    # Convertir el gráfico de ventas de productos a HTML
+    graph_html_ventasproductos = fig_ventasproductos.to_html(full_html=False)
+
+    #________________GRAFICO Total_Venta por Tipo_Venta  ____________________
+
+    # Crear un gráfico de torta para visualizar el Total_Venta por Tipo_Venta
+    fig_ventas_tipo = px.pie(
+        total_por_tipo_venta,
+        names='Tipo_Venta',
+        values='Total_Venta',
+        title='Total de Ventas por Tipo de Venta',
+        hole=0.3,  # Agujero en el centro para hacerlo un donut chart
+    )
+    # Convertir el gráfico de ventas por tipo a HTML
+    graph_html_ventas_tipo = fig_ventas_tipo.to_html(full_html=False)
 
 
 
-
-
-
-
-
-
+    return render_template('dashboard.html', graph_html_clientes=graph_html_clientes, graph_html_productos=graph_html_productos,
+                           graph_html_ventasproductos=graph_html_ventasproductos, graph_html_ventas_tipo=graph_html_ventas_tipo,
+                           graph_html_insumos=graph_html_insumos, graph_html_productos_lotes=graph_html_productos_lotes)
 
 
 
